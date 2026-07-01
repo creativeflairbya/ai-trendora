@@ -124,11 +124,11 @@ export const AdminPanelPage: React.FC = () => {
         })}
       </div>
 
-      {/* Tab 1: Dashboard Overview & Why We Beat ChartAnalyst.ai */}
+      {/* Tab 1: Dashboard Overview & Signal Quality Engine */}
       {activeSubTab === 'dashboard' && (
         <div className="mt-8 space-y-6 animate-fadeIn">
           
-          {/* Comparison Banner vs ChartAnalyst.ai */}
+          {/* Signal quality architecture banner */}
           <div className="p-6 rounded-3xl bg-gradient-to-r from-[#141d30] via-[#101827] to-[#141d30] border-2 border-emerald-500/40 shadow-2xl space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center space-x-2 text-emerald-400 font-extrabold text-xs uppercase tracking-wider">
@@ -136,17 +136,17 @@ export const AdminPanelPage: React.FC = () => {
                 <span>SUPERIOR ARCHITECTURE ANALYSIS</span>
               </div>
               <span className="px-3 py-1 rounded-full bg-emerald-500 text-black font-extrabold text-xs font-mono">
-                Trendora 99% Precision vs ChartAnalyst.ai
+                Trendora 99% Confluence Engine
               </span>
             </div>
 
             <h2 className="text-2xl font-extrabold text-white tracking-tight">
-              Why Trendora Beats ChartAnalyst.ai in Real Profitability
+              Why Trendora Focuses on Safer High-Confluence Setups
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs leading-relaxed text-slate-300">
               <div className="p-4 rounded-2xl bg-black/40 border border-slate-800 space-y-2">
-                <div className="font-bold text-rose-400 text-sm">❌ ChartAnalyst.ai (Standard Vision Wrapper)</div>
+                <div className="font-bold text-rose-400 text-sm">Avoid Low-Quality Static Chart Guessing</div>
                 <p>
                   Relies primarily on visual screenshot processing or static GPT-4 prompts. During sudden macroeconomic news spikes (OPEC announcements, CPI releases), visual wrappers hallucinate breakouts and issue high-risk forced entries that blow up retail accounts.
                 </p>

@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import { LanguageCode, UserProfile } from '../types';
 import { MOCK_ASSETS } from '../data/mockMarkets';
-import { TRANSLATIONS } from '../data/translations';
 import { ACCOUNT_PRESETS } from '../data/serverConfig';
 
 interface NavigationProps {
@@ -37,8 +36,6 @@ export const Navigation: React.FC<NavigationProps> = ({
 }) => {
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
-  const t = TRANSLATIONS[user.language];
-
   const languages: { code: LanguageCode; label: string; flag: string }[] = [
     { code: 'en', label: 'English (US)', flag: '🇺🇸' },
     { code: 'es', label: 'Español', flag: '🇪🇸' },
@@ -110,7 +107,7 @@ export const Navigation: React.FC<NavigationProps> = ({
           </div>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center space-x-1 bg-slate-900/70 p-1.5 rounded-xl border border-slate-800">
+          <nav className="hidden md:flex items-center space-x-1 bg-slate-900/70 p-1.5 rounded-xl border border-slate-800">
             <button
               onClick={() => setCurrentTab('home')}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-1.5 ${
@@ -120,7 +117,7 @@ export const Navigation: React.FC<NavigationProps> = ({
               }`}
             >
               <TrendingUp className="w-3.5 h-3.5" />
-              <span>{t.navHome}</span>
+              <span>Home</span>
             </button>
 
             <button
@@ -132,7 +129,7 @@ export const Navigation: React.FC<NavigationProps> = ({
               }`}
             >
               <Zap className="w-3.5 h-3.5 text-amber-400" />
-              <span>{t.navTerminal}</span>
+              <span>Signals</span>
             </button>
 
             <button
@@ -144,7 +141,7 @@ export const Navigation: React.FC<NavigationProps> = ({
               }`}
             >
               <Layers className="w-3.5 h-3.5" />
-              <span>{t.navScanner}</span>
+              <span>Scanner</span>
             </button>
 
             <button
@@ -156,7 +153,7 @@ export const Navigation: React.FC<NavigationProps> = ({
               }`}
             >
               <Bell className="w-3.5 h-3.5" />
-              <span>{t.navWatchlist}</span>
+              <span>Alerts</span>
             </button>
 
             <button
@@ -168,7 +165,7 @@ export const Navigation: React.FC<NavigationProps> = ({
               }`}
             >
               <Sliders className="w-3.5 h-3.5" />
-              <span>{t.navAdmin}</span>
+              <span>Admin</span>
             </button>
           </nav>
 
@@ -339,7 +336,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       </div>
 
       {/* Mobile App Bottom Navigation Bar */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0c1018]/95 backdrop-blur-lg border-t border-slate-800 px-2 py-2 flex items-center justify-around shadow-2xl">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0c1018]/95 backdrop-blur-lg border-t border-slate-800 px-2 py-2 flex items-center justify-around shadow-2xl">
         <button
           onClick={() => setCurrentTab('home')}
           className={`flex flex-col items-center p-1 rounded-lg ${

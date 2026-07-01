@@ -71,7 +71,7 @@ export const MOCK_ASSETS: AssetData[] = [
       riskLevel: 'Zero-Ruin Shield',
       timeframe: '4H',
       holdingDuration: '2 to 6 Hours (Intraday Quantum Hold)',
-      simpleExplanation: '99% Confluence achieved. Institutional liquidity sweep confirmed above EMA-20. Unlike visual wrappers like ChartAnalyst.ai, our 7-Stage Quant Engine validates live orderbook delta prior to issuing entry.',
+      simpleExplanation: '99% Confluence achieved. Institutional liquidity sweep confirmed above EMA-20. Trendora validates live orderbook delta before issuing entry guidance.',
       advancedExplanation: 'SMC order block retest at 60,600 coincides with XGBoost Volatility Compression break. Risk-to-Reward ratio is 3.8:1. Zero-Ruin Capital Shield locks maximum loss at 1% bankroll.',
       similarHistory: [
         { date: 'Yesterday', asset: 'BTC/USDT', outcome: '+4.8% Institutional Target Hit', confidenceWhenIssued: 99 },
@@ -299,5 +299,54 @@ export const MOCK_ASSETS: AssetData[] = [
         { date: 'Yesterday', asset: 'SOL/USDT', outcome: '+4.8% Institutional Target Hit', confidenceWhenIssued: 99 }
       ]
     }
-  }
+  },
+  ...[
+    ['eth-usdt', 'ETH/USDT', 'Ethereum', 3320.75, 'BINANCE:ETHUSDT'],
+    ['bnb-usdt', 'BNB/USDT', 'BNB Chain', 698.40, 'BINANCE:BNBUSDT'],
+    ['xrp-usdt', 'XRP/USDT', 'XRP Ledger', 2.420, 'BINANCE:XRPUSDT'],
+    ['doge-usdt', 'DOGE/USDT', 'Dogecoin', 0.1825, 'BINANCE:DOGEUSDT'],
+    ['ada-usdt', 'ADA/USDT', 'Cardano', 0.7450, 'BINANCE:ADAUSDT']
+  ].map(([id, symbol, name, price, tv]) => ({
+    id: id as string,
+    symbol: symbol as string,
+    name: name as string,
+    category: 'crypto' as const,
+    tradingViewSymbol: tv as string,
+    price: price as number,
+    change24h: 2.8,
+    high24h: (price as number) * 1.035,
+    low24h: (price as number) * 0.965,
+    volume24h: '$8.2B',
+    regime: 'Quantum Institutional Trend (99% Confluence)' as const,
+    rsi: 63.4,
+    macd: 'Bullish Momentum',
+    ema20: (price as number) * 0.992,
+    ema50: (price as number) * 0.978,
+    supportZone: [(price as number) * 0.982, (price as number) * 0.991] as [number, number],
+    resistanceZone: [(price as number) * 1.025, (price as number) * 1.045] as [number, number],
+    setupQuality: 'HIGH' as const,
+    candles: {
+      '15m': generateCandles(price as number, Math.max((price as number) * 0.006, 0.002), 42),
+      '1H': generateCandles(price as number, Math.max((price as number) * 0.012, 0.004), 42),
+      '4H': generateCandles(price as number, Math.max((price as number) * 0.025, 0.008), 42),
+      '1D': generateCandles(price as number, Math.max((price as number) * 0.045, 0.014), 42)
+    },
+    currentSignal: {
+      action: 'BUY' as const,
+      entryZone: [(price as number) * 0.998, (price as number) * 1.002] as [number, number],
+      stopLoss: (price as number) * 0.985,
+      takeProfit1: (price as number) * 1.026,
+      takeProfit2: (price as number) * 1.048,
+      confidence: 97,
+      historicalSuccessRate: 94,
+      riskLevel: 'Zero-Ruin Shield' as const,
+      timeframe: '4H' as const,
+      holdingDuration: '5m to 4H adaptive hold',
+      simpleExplanation: `${symbol} has multi-timeframe trend alignment and live Binance candle confirmation. Signal adapts to the selected holding period.`,
+      advancedExplanation: 'Order-flow momentum, EMA stack, ATR compression, and higher-timeframe continuation agree. Use only after candle confirmation on the live chart.',
+      similarHistory: [
+        { date: 'Recent setup', asset: symbol as string, outcome: '+3.5% Quant Precision Hit' as const, confidenceWhenIssued: 97 }
+      ]
+    }
+  }))
 ];

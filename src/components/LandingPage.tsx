@@ -35,7 +35,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <section className="relative pt-12 pb-20 lg:pt-20 lg:pb-28 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold mb-8 animate-pulse">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>SUPERIOR TO CHARTANALYST.AI — HYBRID ENGINE V4.2</span>
+          <span>INSTITUTIONAL LIVE CHARTS — HYBRID ENGINE V5.0</span>
         </div>
 
         <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white max-w-5xl mx-auto leading-[1.1]">

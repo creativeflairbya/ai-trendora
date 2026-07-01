@@ -14,7 +14,7 @@ import {
 import { MarketCategory, Timeframe, UserProfile } from '../types';
 import { MOCK_ASSETS } from '../data/mockMarkets';
 import { TRANSLATIONS } from '../data/translations';
-import { TradingViewChart } from './TradingViewChart';
+import { LiveMarketChart } from './LiveMarketChart';
 import confetti from 'canvas-confetti';
 
 interface SignalEnginePageProps {
@@ -36,6 +36,7 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
   const [selectedTimeframe, setSelectedTimeframe] = useState<Timeframe>('4H');
   
   const [holdingPeriod, setHoldingPeriod] = useState('5m');
+  const [liveChartPrice, setLiveChartPrice] = useState<number | null>(null);
   
   // Signal processing simulation
   const [isScanning, setIsScanning] = useState(false);
@@ -66,8 +67,9 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
 
   const adjustedSignal = selectedAsset.currentSignal ? (() => {
     const signal = selectedAsset.currentSignal;
-    const entryMid = selectedAsset.price;
-    const entrySpread = selectedAsset.price * 0.00025 * Math.max(holdMultiplier, 0.2);
+    const chartPrice = liveChartPrice || selectedAsset.price;
+    const entryMid = chartPrice;
+    const entrySpread = chartPrice * 0.00025 * Math.max(holdMultiplier, 0.2);
     const baseStopDistance = Math.abs(signal.entryZone[0] - signal.stopLoss) * holdMultiplier;
     const baseTp1Distance = Math.abs(signal.takeProfit1 - signal.entryZone[0]) * holdMultiplier;
     const baseTp2Distance = Math.abs(signal.takeProfit2 - signal.entryZone[0]) * holdMultiplier;
@@ -82,9 +84,10 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
     };
   })() : undefined;
 
-  const riskPercent = adjustedSignal ? (Math.abs(adjustedSignal.entryZone[0] - adjustedSignal.stopLoss) / selectedAsset.price) * 100 : 0;
-  const tp1Percent = adjustedSignal ? (Math.abs(adjustedSignal.takeProfit1 - adjustedSignal.entryZone[0]) / selectedAsset.price) * 100 : 0;
-  const tp2Percent = adjustedSignal ? (Math.abs(adjustedSignal.takeProfit2 - adjustedSignal.entryZone[0]) / selectedAsset.price) * 100 : 0;
+  const referencePrice = liveChartPrice || selectedAsset.price;
+  const riskPercent = adjustedSignal ? (Math.abs(adjustedSignal.entryZone[0] - adjustedSignal.stopLoss) / referencePrice) * 100 : 0;
+  const tp1Percent = adjustedSignal ? (Math.abs(adjustedSignal.takeProfit1 - adjustedSignal.entryZone[0]) / referencePrice) * 100 : 0;
+  const tp2Percent = adjustedSignal ? (Math.abs(adjustedSignal.takeProfit2 - adjustedSignal.entryZone[0]) / referencePrice) * 100 : 0;
   const directionWord = adjustedSignal?.action === 'SELL' ? 'below' : 'above';
 
   // Handle Get AI Signal button
@@ -127,6 +130,7 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
   const handleSelectAsset = (id: string) => {
     setSelectedAssetId(id);
     setHasGeneratedSignal(false);
+    setLiveChartPrice(null);
   };
 
   return (
@@ -362,7 +366,7 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
                 </div>
               </div>
 
-              <TradingViewChart asset={selectedAsset} holdingPeriod={holdingPeriod} />
+              <LiveMarketChart asset={selectedAsset} holdingPeriod={holdingPeriod} onLivePriceChange={setLiveChartPrice} />
             </div>
           </div>
 
