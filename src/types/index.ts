@@ -24,7 +24,7 @@ export interface AssetData {
   symbol: string;
   name: string;
   category: MarketCategory;
-  tradingViewSymbol: string;
+  bitgetSymbol: string;
   price: number;
   change24h: number;
   high24h: number;

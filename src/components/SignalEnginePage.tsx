@@ -64,6 +64,12 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
     '4H': 1.55
   };
   const holdMultiplier = holdMultiplierMap[holdingPeriod] || 1;
+  const referencePrice = liveChartPrice || selectedAsset.price;
+  const signalPrecision = referencePrice >= 1000 ? 3 : referencePrice >= 10 ? 3 : 4;
+  const formatSignalPrice = (value: number) => value.toLocaleString(undefined, {
+    minimumFractionDigits: signalPrecision,
+    maximumFractionDigits: signalPrecision
+  });
 
   const adjustedSignal = selectedAsset.currentSignal ? (() => {
     const signal = selectedAsset.currentSignal;
@@ -83,12 +89,6 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
       holdingDuration: holdingPeriod
     };
   })() : undefined;
-
-  const referencePrice = liveChartPrice || selectedAsset.price;
-  const riskPercent = adjustedSignal ? (Math.abs(adjustedSignal.entryZone[0] - adjustedSignal.stopLoss) / referencePrice) * 100 : 0;
-  const tp1Percent = adjustedSignal ? (Math.abs(adjustedSignal.takeProfit1 - adjustedSignal.entryZone[0]) / referencePrice) * 100 : 0;
-  const tp2Percent = adjustedSignal ? (Math.abs(adjustedSignal.takeProfit2 - adjustedSignal.entryZone[0]) / referencePrice) * 100 : 0;
-  const directionWord = adjustedSignal?.action === 'SELL' ? 'below' : 'above';
 
   // Handle Get AI Signal button
   const handleGetAiSignal = () => {
@@ -311,14 +311,14 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
                 </div>
                 <div className="mt-1 flex items-center space-x-4 text-xs text-slate-400">
                   <span>24h Vol: <strong className="text-slate-200">{selectedAsset.volume24h}</strong></span>
-                  <span>Source: <strong className="text-emerald-400">{selectedAsset.tradingViewSymbol}</strong></span>
-                  <span>Live price is shown only inside the chart feed to prevent mismatch.</span>
+                  <span>Source: <strong className="text-emerald-400">Bitget {selectedAsset.bitgetSymbol} live futures</strong></span>
+                  <span>Live price is synced from Bitget chart feed.</span>
                 </div>
               </div>
 
               <div className="text-right">
                 <div className="text-sm font-mono font-extrabold text-emerald-400">
-                  TradingView live feed
+                  Bitget live feed
                 </div>
                 <div className="text-xs text-slate-400">
                   No separate app quote shown
@@ -488,37 +488,54 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
                     </div>
 
                     {/* Entry, Stop-Loss, Take-Profit Table */}
-                    <div className="bg-slate-900 rounded-xl p-3.5 border border-slate-800 space-y-2.5 font-mono text-xs">
-                      <div className="flex justify-between items-center pb-2 border-b border-slate-800">
-                        <span className="text-slate-400">{t.entryZone}:</span>
-                        <span className="text-white font-bold text-sm">
-                          live chart price zone after candle confirmation
-                        </span>
-                      </div>
+                    <div className="rounded-xl border border-slate-800 bg-slate-900 p-3.5 font-mono text-xs">
+                      <div className="divide-y divide-slate-800">
+                        <div className="grid grid-cols-[125px_1fr] items-center gap-3 py-2 first:pt-0">
+                          <span className="text-slate-400">Entry Zone</span>
+                          <span className="text-right text-sm font-extrabold text-white">
+                            {formatSignalPrice(adjustedSignal.entryZone[0])} - {formatSignalPrice(adjustedSignal.entryZone[1])}
+                          </span>
+                        </div>
 
-                      <div className="flex justify-between items-center pb-2 border-b border-slate-800 text-rose-400">
-                        <span>{t.stopLoss}:</span>
-                        <span className="font-bold text-sm">{riskPercent.toFixed(2)}% {adjustedSignal.action === 'SELL' ? 'above' : 'below'} entry</span>
-                      </div>
+                        <div className="grid grid-cols-[125px_1fr] items-center gap-3 py-2 text-rose-400">
+                          <span>Stop-Loss</span>
+                          <span className="text-right text-sm font-extrabold">{formatSignalPrice(adjustedSignal.stopLoss)}</span>
+                        </div>
 
-                      <div className="flex justify-between items-center pb-2 border-b border-slate-800 text-emerald-400">
-                        <span>Take-Profit 1:</span>
-                        <span className="font-bold text-sm">{tp1Percent.toFixed(2)}% {directionWord} entry</span>
-                      </div>
+                        <div className="grid grid-cols-[125px_1fr] items-center gap-3 py-2 text-emerald-400">
+                          <span>Take-Profit 1</span>
+                          <span className="text-right text-sm font-extrabold">{formatSignalPrice(adjustedSignal.takeProfit1)}</span>
+                        </div>
 
-                      <div className="flex justify-between items-center pb-2 border-b border-slate-800 text-teal-400">
-                        <span>Take-Profit 2 (Macro):</span>
-                        <span className="font-bold text-sm">{tp2Percent.toFixed(2)}% {directionWord} entry</span>
-                      </div>
+                        <div className="grid grid-cols-[125px_1fr] items-center gap-3 py-2 text-teal-400">
+                          <span>Take-Profit 2</span>
+                          <span className="text-right text-sm font-extrabold">{formatSignalPrice(adjustedSignal.takeProfit2)}</span>
+                        </div>
 
-                      <div className="flex justify-between items-center text-amber-300 pt-1">
-                        <span className="flex items-center space-x-1">
-                          <Clock className="w-3.5 h-3.5 text-amber-400" />
-                          <span>Recommended Holding:</span>
-                        </span>
-                        <span className="font-bold text-xs bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30">
-                          {holdingPeriod} selected by user
-                        </span>
+                        <div className="grid grid-cols-[125px_1fr] items-center gap-3 py-2">
+                          <span className="text-slate-400">Setup Quality</span>
+                          <span className="text-right text-sm font-extrabold text-emerald-400">{selectedAsset.setupQuality}</span>
+                        </div>
+
+                        <div className="grid grid-cols-[125px_1fr] items-center gap-3 py-2">
+                          <span className="text-slate-400">Risk Level</span>
+                          <span className="text-right text-sm font-extrabold text-amber-300">{adjustedSignal.riskLevel}</span>
+                        </div>
+
+                        <div className="grid grid-cols-[125px_1fr] items-center gap-3 py-2">
+                          <span className="text-slate-400">Timeframe</span>
+                          <span className="text-right text-sm font-extrabold text-slate-100">{selectedTimeframe}</span>
+                        </div>
+
+                        <div className="grid grid-cols-[125px_1fr] items-center gap-3 pt-2 text-amber-300">
+                          <span className="flex items-center space-x-1">
+                            <Clock className="h-3.5 w-3.5 text-amber-400" />
+                            <span>Hold</span>
+                          </span>
+                          <span className="justify-self-end rounded border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-right text-xs font-extrabold">
+                            {holdingPeriod}
+                          </span>
+                        </div>
                       </div>
                     </div>
 

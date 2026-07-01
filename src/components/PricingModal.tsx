@@ -173,7 +173,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({ onClose, user, setUs
                 }`}
               >
                 <span className="font-mono font-extrabold text-amber-400">₮</span>
-                <div className="text-xs">Binance Pay USDT</div>
+                <div className="text-xs">USDT Wallet Pay</div>
               </button>
 
               <button
@@ -216,7 +216,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({ onClose, user, setUs
 
               {paymentMethod === 'usdt' && (
                 <div className="text-xs text-slate-300 space-y-1">
-                  <div className="font-bold text-amber-400">Binance Pay / TRC20 Fast Pay</div>
+                  <div className="font-bold text-amber-400">USDT TRC20 Fast Pay</div>
                   <div className="font-mono bg-slate-950 p-2 rounded border border-slate-800 text-[11px]">
                     Address: TL8x92mKA...TrendoraPayAI
                   </div>

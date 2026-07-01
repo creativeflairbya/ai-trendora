@@ -16,6 +16,8 @@ import {
   Smartphone,
   Check,
   Save
+  ,PlusCircle,
+  Trash2
 } from 'lucide-react';
 import { DEFAULT_ADMIN_PAYMENT_CONFIG, GENERATE_SQL_SCHEMA, GENERATE_JSON_DUMP } from '../data/serverConfig';
 import confetti from 'canvas-confetti';
@@ -32,12 +34,29 @@ export const AdminPanelPage: React.FC = () => {
   const [paymentConfig, setPaymentConfig] = useState(DEFAULT_ADMIN_PAYMENT_CONFIG);
   const [isSavingPay, setIsSavingPay] = useState(false);
 
-  // Simulated users
-  const [userList, setUserList] = useState([
-    { id: '1', name: 'Zayn Malik', email: 'zayn@trendora.io', plan: 'Unlimited VIP', credits: 'Unlimited', lang: 'EN', status: 'Active' },
-    { id: '2', name: 'Ahmad Raza', email: 'ahmad@pk-traders.com', plan: 'Active Trader', credits: 18, lang: 'UR', status: 'Active' },
-    { id: '3', name: 'Carlos Mendoza', email: 'carlos@mx-crypto.es', plan: 'Pro Trader', credits: 94, lang: 'ES', status: 'Active' },
-    { id: '4', name: 'Fatima Al-Sayed', email: 'fatima@gulfinvest.ae', plan: 'Starter Pass', credits: 4, lang: 'AR', status: 'Active' },
+  const [newUser, setNewUser] = useState({
+    name: '',
+    email: '',
+    plan: 'Starter Pass',
+    credits: '12',
+    expiry: '2026-12-31',
+    lang: 'EN'
+  });
+
+  const [userList, setUserList] = useState<Array<{
+    id: string;
+    name: string;
+    email: string;
+    plan: string;
+    credits: number | 'Unlimited';
+    lang: string;
+    status: 'Active' | 'Suspended';
+    expiry: string;
+  }>>([
+    { id: '1', name: 'Zayn Malik', email: 'zayn@trendora.io', plan: 'Unlimited VIP', credits: 'Unlimited', lang: 'EN', status: 'Active', expiry: 'Never' },
+    { id: '2', name: 'Ahmad Raza', email: 'ahmad@pk-traders.com', plan: 'Active Trader', credits: 18, lang: 'UR', status: 'Active', expiry: '2026-08-30' },
+    { id: '3', name: 'Carlos Mendoza', email: 'carlos@mx-crypto.es', plan: 'Pro Trader', credits: 94, lang: 'ES', status: 'Active', expiry: '2026-09-15' },
+    { id: '4', name: 'Fatima Al-Sayed', email: 'fatima@gulfinvest.ae', plan: 'Starter Pass', credits: 4, lang: 'AR', status: 'Active', expiry: '2026-07-15' },
   ]);
 
   const addCredits = (userId: string) => {
@@ -47,6 +66,35 @@ export const AdminPanelPage: React.FC = () => {
       }
       return u;
     }));
+  };
+
+  const updateUser = (userId: string, key: 'plan' | 'credits' | 'expiry' | 'status', value: string) => {
+    setUserList(userList.map((u) => {
+      if (u.id !== userId) return u;
+      if (key === 'credits') {
+        return { ...u, credits: value === 'Unlimited' ? 'Unlimited' : Number(value) };
+      }
+      return { ...u, [key]: value } as typeof u;
+    }));
+  };
+
+  const createUser = () => {
+    if (!newUser.email || !newUser.name) return;
+    setUserList([
+      {
+        id: String(Date.now()),
+        name: newUser.name,
+        email: newUser.email,
+        plan: newUser.plan,
+        credits: newUser.credits === 'Unlimited' ? 'Unlimited' : Number(newUser.credits),
+        lang: newUser.lang,
+        status: 'Active',
+        expiry: newUser.plan === 'Unlimited VIP' ? 'Never' : newUser.expiry
+      },
+      ...userList
+    ]);
+    setNewUser({ name: '', email: '', plan: 'Starter Pass', credits: '12', expiry: '2026-12-31', lang: 'EN' });
+    confetti({ particleCount: 35, spread: 50, origin: { y: 0.7 } });
   };
 
   const handleSavePaymentConfig = () => {
@@ -201,7 +249,7 @@ export const AdminPanelPage: React.FC = () => {
                   <span>Admin Payment Account & Checkout Setup</span>
                 </h2>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Enter your local mobile wallets, bank accounts, and Binance Pay TRC20 wallet addresses so all subscriber payments go directly into your account.
+                  Enter your local mobile wallets, bank accounts, and USDT TRC20 wallet addresses so all subscriber payments go directly into your account.
                 </p>
               </div>
 
@@ -272,7 +320,7 @@ export const AdminPanelPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1">Binance Pay USDT TRC20 Wallet Address</label>
+                  <label className="block text-slate-400 mb-1">USDT TRC20 Wallet Address</label>
                   <input
                     type="text"
                     value={paymentConfig.binancePayTrc20Address}
@@ -282,7 +330,7 @@ export const AdminPanelPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1">Binance Merchant ID</label>
+                  <label className="block text-slate-400 mb-1">Crypto Merchant / Reference ID</label>
                   <input
                     type="text"
                     value={paymentConfig.binanceMerchantId}
@@ -319,6 +367,60 @@ export const AdminPanelPage: React.FC = () => {
       {/* Tab 3: User Management */}
       {activeSubTab === 'users' && (
         <div className="mt-8 space-y-4 animate-fadeIn">
+          <div className="grid grid-cols-1 lg:grid-cols-6 gap-3 rounded-2xl border border-slate-800 bg-[#0f1420] p-4">
+            <input
+              value={newUser.name}
+              onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+              placeholder="Full name"
+              className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white"
+            />
+            <input
+              value={newUser.email}
+              onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+              placeholder="Email address"
+              className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white lg:col-span-2"
+            />
+            <select
+              value={newUser.plan}
+              onChange={(e) => setNewUser({ ...newUser, plan: e.target.value, credits: e.target.value === 'Unlimited VIP' ? 'Unlimited' : newUser.credits })}
+              className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white"
+            >
+              <option>Free Starter</option>
+              <option>Starter Pass</option>
+              <option>Active Trader</option>
+              <option>Pro Trader</option>
+              <option>Unlimited VIP</option>
+            </select>
+            <input
+              value={newUser.credits}
+              onChange={(e) => setNewUser({ ...newUser, credits: e.target.value })}
+              placeholder="Credits"
+              className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white"
+            />
+            <button
+              onClick={createUser}
+              className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-extrabold text-black hover:bg-emerald-400 flex items-center justify-center gap-1"
+            >
+              <PlusCircle className="w-4 h-4" /> Create User
+            </button>
+            <input
+              type="date"
+              value={newUser.expiry}
+              onChange={(e) => setNewUser({ ...newUser, expiry: e.target.value })}
+              className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white lg:col-span-2"
+            />
+            <select
+              value={newUser.lang}
+              onChange={(e) => setNewUser({ ...newUser, lang: e.target.value })}
+              className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white"
+            >
+              <option>EN</option><option>UR</option><option>AR</option><option>ES</option><option>FR</option>
+            </select>
+            <div className="lg:col-span-3 text-[11px] text-slate-400 flex items-center">
+              Master account controls create users, assign plans, set expiry, set credits, suspend/reactivate, and delete test accounts.
+            </div>
+          </div>
+
           <div className="flex items-center justify-between">
             <div className="relative w-64">
               <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
@@ -338,8 +440,9 @@ export const AdminPanelPage: React.FC = () => {
                   <tr>
                     <th className="p-4">User Name</th>
                     <th className="p-4">Plan Status</th>
-                    <th className="p-4">Remaining Credits</th>
-                    <th className="p-4">Language</th>
+                    <th className="p-4">Credits</th>
+                    <th className="p-4">Expiry</th>
+                    <th className="p-4">Status</th>
                     <th className="p-4 text-right">Admin Actions</th>
                   </tr>
                 </thead>
@@ -351,12 +454,35 @@ export const AdminPanelPage: React.FC = () => {
                         <div className="text-slate-400 text-[11px]">{u.email}</div>
                       </td>
                       <td className="p-4">
-                        <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 font-bold">
-                          {u.plan}
-                        </span>
+                        <select
+                          value={u.plan}
+                          onChange={(e) => updateUser(u.id, 'plan', e.target.value)}
+                          className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-[11px] text-purple-300 font-bold"
+                        >
+                          <option>Free Starter</option>
+                          <option>Starter Pass</option>
+                          <option>Active Trader</option>
+                          <option>Pro Trader</option>
+                          <option>Unlimited VIP</option>
+                        </select>
                       </td>
-                      <td className="p-4 font-bold text-emerald-400">{u.credits}</td>
-                      <td className="p-4">{u.lang}</td>
+                      <td className="p-4">
+                        <input
+                          value={u.credits}
+                          onChange={(e) => updateUser(u.id, 'credits', e.target.value)}
+                          className="w-24 rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-[11px] font-bold text-emerald-400"
+                        />
+                      </td>
+                      <td className="p-4">
+                        <input
+                          value={u.expiry}
+                          onChange={(e) => updateUser(u.id, 'expiry', e.target.value)}
+                          className="w-28 rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-[11px] text-slate-200"
+                        />
+                      </td>
+                      <td className="p-4">
+                        <span className={`px-2 py-0.5 rounded font-bold ${u.status === 'Active' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>{u.status}</span>
+                      </td>
                       <td className="p-4 text-right space-x-2">
                         <button
                           onClick={() => addCredits(u.id)}
@@ -364,8 +490,23 @@ export const AdminPanelPage: React.FC = () => {
                         >
                           +10 Credits
                         </button>
-                        <button className="px-2.5 py-1 rounded bg-rose-500/20 text-rose-400 text-[11px]">
-                          Suspend
+                        <button
+                          onClick={() => updateUser(u.id, 'credits', 'Unlimited')}
+                          className="px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 text-[11px]"
+                        >
+                          Unlimited
+                        </button>
+                        <button
+                          onClick={() => updateUser(u.id, 'status', u.status === 'Active' ? 'Suspended' : 'Active')}
+                          className="px-2.5 py-1 rounded bg-rose-500/20 text-rose-400 text-[11px]"
+                        >
+                          {u.status === 'Active' ? 'Suspend' : 'Reactivate'}
+                        </button>
+                        <button
+                          onClick={() => setUserList(userList.filter((item) => item.id !== u.id))}
+                          className="px-2.5 py-1 rounded bg-slate-800 text-slate-300 text-[11px] inline-flex items-center gap-1"
+                        >
+                          <Trash2 className="w-3 h-3" /> Delete
                         </button>
                       </td>
                     </tr>

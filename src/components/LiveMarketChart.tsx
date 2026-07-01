@@ -12,21 +12,14 @@ interface LiveMarketChartProps {
 const intervalMap: Record<string, string> = {
   '1m': '1m',
   '5m': '5m',
-  '10m': '15m',
+  '10m': '5m',
   '30m': '30m',
-  '1H': '1h',
-  '4H': '4h'
+  '1H': '1H',
+  '4H': '4H'
 };
 
-const cryptoMap: Record<string, string> = {
-  'btc-usdt': 'btcusdt',
-  'eth-usdt': 'ethusdt',
-  'sol-usdt': 'solusdt',
-  'bnb-usdt': 'bnbusdt',
-  'xrp-usdt': 'xrpusdt',
-  'doge-usdt': 'dogeusdt',
-  'ada-usdt': 'adausdt'
-};
+const bitgetBaseUrl = 'https://api.bitget.com/api/v2/mix/market';
+const bitgetWsUrl = 'wss://ws.bitget.com/v2/ws/public';
 
 const formatChartPrice = (value: number) => {
   if (value >= 1000) return value.toLocaleString(undefined, { minimumFractionDigits: 3, maximumFractionDigits: 3 });
@@ -53,8 +46,10 @@ export const LiveMarketChart: React.FC<LiveMarketChartProps> = ({ asset, holding
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const lastCandleRef = useRef<CandlestickData | null>(null);
   const [livePrice, setLivePrice] = useState(asset.price);
   const [isLive, setIsLive] = useState(false);
+  const [feedLabel, setFeedLabel] = useState('initializing');
 
   const candles = useMemo(() => toCandleData(asset, holdingPeriod), [asset, holdingPeriod]);
   const volumeData = useMemo<HistogramData[]>(() => candles.map((candle, index) => ({
@@ -106,6 +101,7 @@ export const LiveMarketChart: React.FC<LiveMarketChartProps> = ({ asset, holding
 
     candleSeries.setData(candles);
     volumeSeries.setData(volumeData);
+    lastCandleRef.current = candles[candles.length - 1] || null;
     chart.timeScale().fitContent();
 
     chartRef.current = chart;
@@ -123,66 +119,149 @@ export const LiveMarketChart: React.FC<LiveMarketChartProps> = ({ asset, holding
   useEffect(() => {
     setLivePrice(asset.price);
     setIsLive(false);
+    setFeedLabel('initializing');
     onLivePriceChange?.(asset.price);
 
     wsRef.current?.close();
-    const cryptoSymbol = cryptoMap[asset.id];
+    const bitgetSymbol = asset.bitgetSymbol;
     const interval = intervalMap[holdingPeriod] || '5m';
 
-    if (cryptoSymbol) {
-      const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${cryptoSymbol}@kline_${interval}`);
-      wsRef.current = ws;
-      ws.onopen = () => setIsLive(true);
-      ws.onclose = () => setIsLive(false);
-      ws.onerror = () => setIsLive(false);
-      ws.onmessage = (event) => {
-        const payload = JSON.parse(event.data);
-        const k = payload.k;
-        const candle: CandlestickData = {
-          time: Math.floor(k.t / 1000) as UTCTimestamp,
-          open: Number(k.o),
-          high: Number(k.h),
-          low: Number(k.l),
-          close: Number(k.c)
+    if (bitgetSymbol) {
+      let cancelled = false;
+      const symbol = bitgetSymbol;
+
+      const hydrateFromBitget = async () => {
+        try {
+          const [klinesRes, tickerRes] = await Promise.all([
+            fetch(`${bitgetBaseUrl}/candles?symbol=${symbol}&productType=USDT-FUTURES&granularity=${interval}&limit=300`, { cache: 'no-store' }),
+            fetch(`${bitgetBaseUrl}/ticker?symbol=${symbol}&productType=USDT-FUTURES`, { cache: 'no-store' })
+          ]);
+          if (!klinesRes.ok || !tickerRes.ok) throw new Error('Bitget REST unavailable');
+          const klinesPayload = await klinesRes.json();
+          const tickerPayload = await tickerRes.json();
+          if (cancelled) return;
+
+          const klines = Array.isArray(klinesPayload.data) ? klinesPayload.data : [];
+          const ticker = Array.isArray(tickerPayload.data) ? tickerPayload.data[0] : tickerPayload.data;
+
+          const liveCandles: CandlestickData[] = klines
+            .map((row: Array<string | number>): CandlestickData => ({
+              time: Math.floor(Number(row[0]) / 1000) as UTCTimestamp,
+              open: Number(row[1]),
+              high: Number(row[2]),
+              low: Number(row[3]),
+              close: Number(row[4])
+            }))
+            .sort((a: CandlestickData, b: CandlestickData) => Number(a.time) - Number(b.time));
+          const liveVolume: HistogramData[] = klines.map((row: Array<string | number>): HistogramData => {
+            const open = Number(row[1]);
+            const close = Number(row[4]);
+            return {
+              time: Math.floor(Number(row[0]) / 1000) as UTCTimestamp,
+              value: Number(row[5]),
+              color: close >= open ? 'rgba(13, 148, 136, 0.45)' : 'rgba(239, 68, 68, 0.45)'
+            };
+          }).sort((a: HistogramData, b: HistogramData) => Number(a.time) - Number(b.time));
+          candleSeriesRef.current?.setData(liveCandles);
+          volumeSeriesRef.current?.setData(liveVolume);
+          chartRef.current?.timeScale().fitContent();
+          lastCandleRef.current = liveCandles[liveCandles.length - 1] || null;
+
+          const price = Number(ticker?.lastPr || ticker?.markPrice || lastCandleRef.current?.close || asset.price);
+          setLivePrice(price);
+          setFeedLabel('Bitget futures REST synced');
+          onLivePriceChange?.(price);
+        } catch {
+          setFeedLabel('Bitget fallback candles');
+        }
+
+        if (cancelled) return;
+        const ws = new WebSocket(bitgetWsUrl);
+        wsRef.current = ws;
+        ws.onopen = () => {
+          setIsLive(true);
+          setFeedLabel('Bitget futures live stream');
+          ws.send(JSON.stringify({
+            op: 'subscribe',
+            args: [
+              { instType: 'USDT-FUTURES', channel: `candle${interval}`, instId: symbol },
+              { instType: 'USDT-FUTURES', channel: 'ticker', instId: symbol },
+              { instType: 'USDT-FUTURES', channel: 'trade', instId: symbol }
+            ]
+          }));
         };
-        const volume: HistogramData = {
-          time: candle.time as UTCTimestamp,
-          value: Number(k.v),
-          color: candle.close >= candle.open ? 'rgba(13, 148, 136, 0.45)' : 'rgba(239, 68, 68, 0.45)'
+        ws.onclose = () => setIsLive(false);
+        ws.onerror = () => {
+          setIsLive(false);
+          setFeedLabel('Bitget stream reconnect needed');
         };
-        candleSeriesRef.current?.update(candle);
-        volumeSeriesRef.current?.update(volume);
-        setLivePrice(candle.close);
-        onLivePriceChange?.(candle.close);
+        ws.onmessage = (event) => {
+          if (event.data === 'pong') return;
+          const payload = JSON.parse(event.data);
+          if (payload.event) return;
+          const data = payload.data || [];
+          const channel = payload.arg?.channel || '';
+
+          if (channel.startsWith('candle') && data.length > 0) {
+            const k = data[data.length - 1];
+            const candle: CandlestickData = {
+              time: Math.floor(Number(k[0]) / 1000) as UTCTimestamp,
+              open: Number(k[1]),
+              high: Number(k[2]),
+              low: Number(k[3]),
+              close: Number(k[4])
+            };
+            const volume: HistogramData = {
+              time: candle.time as UTCTimestamp,
+              value: Number(k[5]),
+              color: candle.close >= candle.open ? 'rgba(13, 148, 136, 0.45)' : 'rgba(239, 68, 68, 0.45)'
+            };
+            lastCandleRef.current = candle;
+            candleSeriesRef.current?.update(candle);
+            volumeSeriesRef.current?.update(volume);
+            setLivePrice(candle.close);
+            onLivePriceChange?.(candle.close);
+          }
+
+          if (channel === 'ticker' && data.length > 0) {
+            const ticker = data[0];
+            const price = Number(ticker.lastPr || ticker.markPrice || ticker.bidPr || ticker.askPr);
+            if (Number.isFinite(price)) {
+              setLivePrice(price);
+              onLivePriceChange?.(price);
+            }
+          }
+
+          if (channel === 'trade' && data.length > 0 && lastCandleRef.current) {
+            const lastTrade = data[data.length - 1];
+            const tradePrice = Number(lastTrade.price || lastTrade.p || lastTrade[1]);
+            if (!Number.isFinite(tradePrice)) return;
+            const updatedCandle: CandlestickData = {
+              ...lastCandleRef.current,
+              high: Math.max(lastCandleRef.current.high, tradePrice),
+              low: Math.min(lastCandleRef.current.low, tradePrice),
+              close: tradePrice
+            };
+            lastCandleRef.current = updatedCandle;
+            candleSeriesRef.current?.update(updatedCandle);
+            setLivePrice(tradePrice);
+            onLivePriceChange?.(tradePrice);
+          }
+        };
+
+        const pingTimer = window.setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) ws.send('ping');
+        }, 25000);
+
+        ws.addEventListener('close', () => window.clearInterval(pingTimer));
       };
-      return () => ws.close();
+
+      hydrateFromBitget();
+      return () => {
+        cancelled = true;
+        wsRef.current?.close();
+      };
     }
-
-    // Commodity fallback: keeps candles moving until your paid metals/commodities feed is connected.
-    const timer = window.setInterval(() => {
-      setLivePrice((previous) => {
-        const drift = previous * (Math.random() - 0.48) * 0.00045;
-        const next = Number((previous + drift).toFixed(asset.price >= 10 ? 3 : 4));
-        const now = Math.floor(Date.now() / 1000) as UTCTimestamp;
-        const candle: CandlestickData = {
-          time: now,
-          open: previous,
-          high: Math.max(previous, next) + Math.abs(drift) * 0.7,
-          low: Math.min(previous, next) - Math.abs(drift) * 0.7,
-          close: next
-        };
-        candleSeriesRef.current?.update(candle);
-        volumeSeriesRef.current?.update({
-          time: now,
-          value: Math.floor(Math.random() * 5000 + 900),
-          color: next >= previous ? 'rgba(13, 148, 136, 0.45)' : 'rgba(239, 68, 68, 0.45)'
-        });
-        onLivePriceChange?.(next);
-        return next;
-      });
-    }, holdingPeriod === '1m' ? 1200 : 1800);
-
-    return () => window.clearInterval(timer);
   }, [asset, holdingPeriod, onLivePriceChange]);
 
   return (
@@ -197,16 +276,16 @@ export const LiveMarketChart: React.FC<LiveMarketChartProps> = ({ asset, holding
             <div className="text-2xl font-extrabold text-red-500">{formatChartPrice(livePrice)}</div>
             <div className="text-[11px] text-slate-500">chart feed price</div>
           </div>
-          <div className={`flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold ${isLive || asset.category !== 'crypto' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-            {isLive || asset.category !== 'crypto' ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-            <span>{asset.category === 'crypto' ? 'BINANCE LIVE' : 'LIVE FEED READY'}</span>
+          <div className={`flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold ${isLive ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+            {isLive ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
+            <span>BITGET LIVE</span>
           </div>
         </div>
       </div>
       <div ref={containerRef} className="h-full w-full pt-12" />
       <div className="absolute bottom-3 left-3 z-20 flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 text-[11px] font-bold text-slate-700 shadow">
         <Activity className="h-3.5 w-3.5 text-emerald-500" />
-        <span>Candles update continuously with selected holding timeframe</span>
+        <span>{feedLabel} | candles update continuously with selected holding timeframe</span>
       </div>
     </div>
   );
