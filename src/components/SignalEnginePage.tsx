@@ -11,10 +11,10 @@ import {
   Activity,
   Clock
 } from 'lucide-react';
-import { MarketCategory, Timeframe, UserProfile } from '../types';
+import { AssetData, MarketCategory, Timeframe, UserProfile } from '../types';
 import { MOCK_ASSETS } from '../data/mockMarkets';
 import { TRANSLATIONS } from '../data/translations';
-import { LiveMarketChart } from './LiveMarketChart';
+import { ExchangeChartPanel } from './ExchangeChartPanel';
 import confetti from 'canvas-confetti';
 
 interface SignalEnginePageProps {
@@ -23,6 +23,8 @@ interface SignalEnginePageProps {
   openPricingModal: () => void;
   openCapitalShield: () => void;
 }
+
+type LockedSignal = NonNullable<AssetData['currentSignal']>;
 
 export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
   user,
@@ -36,12 +38,13 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
   const [selectedTimeframe, setSelectedTimeframe] = useState<Timeframe>('4H');
   
   const [holdingPeriod, setHoldingPeriod] = useState('5m');
-  const [liveChartPrice, setLiveChartPrice] = useState<number | null>(null);
+  const [liveTickerPrice, setLiveTickerPrice] = useState<number | null>(null);
   
   // Signal processing simulation
   const [isScanning, setIsScanning] = useState(false);
   const [scanStep, setScanStep] = useState(0);
   const [hasGeneratedSignal, setHasGeneratedSignal] = useState(false);
+  const [lockedSignal, setLockedSignal] = useState<LockedSignal | null>(null);
   const [explanationMode, setExplanationMode] = useState<'simple' | 'advanced'>('simple');
 
   const t = TRANSLATIONS[user.language];
@@ -64,16 +67,17 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
     '4H': 1.55
   };
   const holdMultiplier = holdMultiplierMap[holdingPeriod] || 1;
-  const referencePrice = liveChartPrice || selectedAsset.price;
+  const referencePrice = liveTickerPrice || selectedAsset.price;
   const signalPrecision = referencePrice >= 1000 ? 3 : referencePrice >= 10 ? 3 : 4;
   const formatSignalPrice = (value: number) => value.toLocaleString(undefined, {
     minimumFractionDigits: signalPrecision,
     maximumFractionDigits: signalPrecision
   });
 
-  const adjustedSignal = selectedAsset.currentSignal ? (() => {
+  const adjustedSignal: LockedSignal | undefined = selectedAsset.currentSignal ? (() => {
     const signal = selectedAsset.currentSignal;
-    const chartPrice = liveChartPrice || selectedAsset.price;
+    if (!liveTickerPrice) return undefined;
+    const chartPrice = liveTickerPrice;
     const entryMid = chartPrice;
     const entrySpread = chartPrice * 0.00025 * Math.max(holdMultiplier, 0.2);
     const baseStopDistance = Math.abs(signal.entryZone[0] - signal.stopLoss) * holdMultiplier;
@@ -89,6 +93,7 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
       holdingDuration: holdingPeriod
     };
   })() : undefined;
+  const displaySignal = lockedSignal || adjustedSignal;
 
   // Handle Get AI Signal button
   const handleGetAiSignal = () => {
@@ -106,6 +111,9 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
     setTimeout(() => setScanStep(4), 1200);
     setTimeout(() => {
       setIsScanning(false);
+
+      // Freeze signal levels at generation time so live ticker movement does not change entry/SL/TP.
+      setLockedSignal(adjustedSignal || null);
       setHasGeneratedSignal(true);
 
       // Deduct credit if not unlimited
@@ -130,7 +138,13 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
   const handleSelectAsset = (id: string) => {
     setSelectedAssetId(id);
     setHasGeneratedSignal(false);
-    setLiveChartPrice(null);
+    setLockedSignal(null);
+    setLiveTickerPrice(null);
+  };
+
+  const resetGeneratedSignal = () => {
+    setHasGeneratedSignal(false);
+    setLockedSignal(null);
   };
 
   return (
@@ -336,7 +350,10 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
                   {(['15m', '1H', '4H', '1D'] as Timeframe[]).map((tf) => (
                     <button
                       key={tf}
-                      onClick={() => setSelectedTimeframe(tf)}
+                      onClick={() => {
+                        setSelectedTimeframe(tf);
+                        resetGeneratedSignal();
+                      }}
                       className={`px-2.5 py-1 rounded text-xs font-mono font-bold transition ${
                         selectedTimeframe === tf
                           ? 'bg-emerald-500 text-black shadow-sm'
@@ -353,7 +370,10 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
                   {['1m', '5m', '10m', '30m', '1H', '4H'].map((period) => (
                     <button
                       key={period}
-                      onClick={() => setHoldingPeriod(period)}
+                      onClick={() => {
+                        setHoldingPeriod(period);
+                        resetGeneratedSignal();
+                      }}
                       className={`px-2.5 py-1 rounded border font-mono text-[11px] transition whitespace-nowrap ${
                         holdingPeriod === period
                           ? 'bg-amber-400 text-black border-amber-300 font-extrabold'
@@ -366,7 +386,12 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
                 </div>
               </div>
 
-              <LiveMarketChart asset={selectedAsset} holdingPeriod={holdingPeriod} onLivePriceChange={setLiveChartPrice} />
+              <ExchangeChartPanel
+                asset={selectedAsset}
+                timeframe={selectedTimeframe}
+                holdingPeriod={holdingPeriod}
+                onLivePriceChange={setLiveTickerPrice}
+              />
             </div>
           </div>
 
@@ -470,7 +495,7 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
 
               {/* SIGNAL RESULT CONDITIONAL RENDERING */}
               {hasGeneratedSignal ? (
-                selectedAsset.setupQuality === 'HIGH' && adjustedSignal ? (
+                selectedAsset.setupQuality === 'HIGH' && displaySignal ? (
                   /* HIGH SETUP QUALITY SIGNAL RESULTS */
                   <div className="space-y-4 pt-2 border-t border-slate-800 animate-fadeIn">
                     
@@ -479,7 +504,7 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
                       <div className="flex items-center space-x-2">
                         <CheckCircle className="w-5 h-5 text-emerald-400" />
                         <span className="text-base font-black text-white font-mono tracking-wide">
-                          {adjustedSignal.action === 'BUY' ? t.actionBuy : t.actionSell}
+                          {displaySignal.action === 'BUY' ? t.actionBuy : t.actionSell}
                         </span>
                       </div>
                       <span className="px-2 py-0.5 rounded bg-emerald-500 text-black font-extrabold text-xs">
@@ -493,23 +518,23 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
                         <div className="grid grid-cols-[125px_1fr] items-center gap-3 py-2 first:pt-0">
                           <span className="text-slate-400">Entry Zone</span>
                           <span className="text-right text-sm font-extrabold text-white">
-                            {formatSignalPrice(adjustedSignal.entryZone[0])} - {formatSignalPrice(adjustedSignal.entryZone[1])}
+                            {formatSignalPrice(displaySignal.entryZone[0])} - {formatSignalPrice(displaySignal.entryZone[1])}
                           </span>
                         </div>
 
                         <div className="grid grid-cols-[125px_1fr] items-center gap-3 py-2 text-rose-400">
                           <span>Stop-Loss</span>
-                          <span className="text-right text-sm font-extrabold">{formatSignalPrice(adjustedSignal.stopLoss)}</span>
+                          <span className="text-right text-sm font-extrabold">{formatSignalPrice(displaySignal.stopLoss)}</span>
                         </div>
 
                         <div className="grid grid-cols-[125px_1fr] items-center gap-3 py-2 text-emerald-400">
                           <span>Take-Profit 1</span>
-                          <span className="text-right text-sm font-extrabold">{formatSignalPrice(adjustedSignal.takeProfit1)}</span>
+                          <span className="text-right text-sm font-extrabold">{formatSignalPrice(displaySignal.takeProfit1)}</span>
                         </div>
 
                         <div className="grid grid-cols-[125px_1fr] items-center gap-3 py-2 text-teal-400">
                           <span>Take-Profit 2</span>
-                          <span className="text-right text-sm font-extrabold">{formatSignalPrice(adjustedSignal.takeProfit2)}</span>
+                          <span className="text-right text-sm font-extrabold">{formatSignalPrice(displaySignal.takeProfit2)}</span>
                         </div>
 
                         <div className="grid grid-cols-[125px_1fr] items-center gap-3 py-2">
@@ -519,7 +544,7 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
 
                         <div className="grid grid-cols-[125px_1fr] items-center gap-3 py-2">
                           <span className="text-slate-400">Risk Level</span>
-                          <span className="text-right text-sm font-extrabold text-amber-300">{adjustedSignal.riskLevel}</span>
+                          <span className="text-right text-sm font-extrabold text-amber-300">{displaySignal.riskLevel}</span>
                         </div>
 
                         <div className="grid grid-cols-[125px_1fr] items-center gap-3 py-2">
@@ -565,8 +590,8 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
 
                       <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-xs text-slate-300 leading-relaxed">
                         {explanationMode === 'simple'
-                          ? adjustedSignal.simpleExplanation
-                          : adjustedSignal.advancedExplanation}
+                          ? displaySignal.simpleExplanation
+                          : displaySignal.advancedExplanation}
                       </div>
                     </div>
 
@@ -574,13 +599,23 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
                     <div className="space-y-2">
                       <div className="text-[11px] font-bold text-slate-400 uppercase font-mono">Similar Setup History</div>
                       <div className="space-y-1.5">
-                        {adjustedSignal.similarHistory.map((hist, i) => (
+                        {displaySignal.similarHistory.map((hist, i) => (
                           <div key={i} className="p-2 rounded-lg bg-slate-900 border border-slate-800/80 flex items-center justify-between text-[11px]">
                             <span className="text-slate-400 font-mono">{hist.date} ({hist.asset})</span>
                             <span className="text-emerald-400 font-bold">{hist.outcome}</span>
                           </div>
                         ))}
                       </div>
+                    </div>
+                  </div>
+                ) : selectedAsset.setupQuality === 'HIGH' ? (
+                  <div className="space-y-4 pt-2 border-t border-slate-800 animate-fadeIn">
+                    <div className="p-4 rounded-xl bg-amber-500/20 border border-amber-500/50 text-center space-y-2">
+                      <AlertTriangle className="w-6 h-6 text-amber-400 mx-auto" />
+                      <div className="font-bold text-amber-300 text-sm">Live ticker required</div>
+                      <p className="text-xs text-slate-300 leading-relaxed">
+                        Wait for the Bitget live ticker to connect. Trendora will not invent price levels or generate a chart-based signal without a live exchange quote.
+                      </p>
                     </div>
                   </div>
                 ) : (

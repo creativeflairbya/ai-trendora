@@ -337,15 +337,15 @@ export const MOCK_ASSETS: AssetData[] = [
       stopLoss: (price as number) * 0.985,
       takeProfit1: (price as number) * 1.026,
       takeProfit2: (price as number) * 1.048,
-      confidence: 97,
-      historicalSuccessRate: 94,
+      confidence: 99,
+      historicalSuccessRate: 98,
       riskLevel: 'Zero-Ruin Shield' as const,
       timeframe: '4H' as const,
       holdingDuration: '5m to 4H adaptive hold',
       simpleExplanation: `${symbol} has multi-timeframe trend alignment and live Bitget futures candle confirmation. Signal adapts to the selected holding period.`,
       advancedExplanation: 'Order-flow momentum, EMA stack, ATR compression, and higher-timeframe continuation agree. Use only after candle confirmation on the live chart.',
       similarHistory: [
-        { date: 'Recent setup', asset: symbol as string, outcome: '+3.5% Quant Precision Hit' as const, confidenceWhenIssued: 97 }
+        { date: 'Recent setup', asset: symbol as string, outcome: '+3.5% Quant Precision Hit' as const, confidenceWhenIssued: 99 }
       ]
     }
   }))

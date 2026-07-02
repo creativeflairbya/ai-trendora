@@ -196,7 +196,7 @@ export const AdminPanelPage: React.FC = () => {
               <div className="p-4 rounded-2xl bg-black/40 border border-slate-800 space-y-2">
                 <div className="font-bold text-rose-400 text-sm">Avoid Low-Quality Static Chart Guessing</div>
                 <p>
-                  Relies primarily on visual screenshot processing or static GPT-4 prompts. During sudden macroeconomic news spikes (OPEC announcements, CPI releases), visual wrappers hallucinate breakouts and issue high-risk forced entries that blow up retail accounts.
+                  Low-quality signal systems rely on stale candles, delayed quotes, or static prompts. During sudden macroeconomic news spikes, they can issue high-risk forced entries that blow up retail accounts.
                 </p>
               </div>
 
