@@ -6,15 +6,14 @@ import {
   CheckCircle, 
   ShieldAlert, 
   ArrowRight, 
-  Zap, 
   Sliders, 
-  Activity,
   Clock
 } from 'lucide-react';
-import { AssetData, MarketCategory, Timeframe, UserProfile } from '../types';
+import { MarketCategory, Timeframe, UserProfile } from '../types';
 import { MOCK_ASSETS } from '../data/mockMarkets';
 import { TRANSLATIONS } from '../data/translations';
-import { ExchangeChartPanel } from './ExchangeChartPanel';
+import { ChartVisionAnalyzer } from './ChartVisionAnalyzer';
+import { buildProfessionalSignal, ProfessionalSignal } from '../utils/proSignalEngine';
 import confetti from 'canvas-confetti';
 
 interface SignalEnginePageProps {
@@ -24,12 +23,10 @@ interface SignalEnginePageProps {
   openCapitalShield: () => void;
 }
 
-type LockedSignal = NonNullable<AssetData['currentSignal']>;
+type LockedSignal = ProfessionalSignal;
 
 export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
   user,
-  setUser,
-  openPricingModal,
   openCapitalShield
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<MarketCategory | 'all'>('all');
@@ -38,11 +35,8 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
   const [selectedTimeframe, setSelectedTimeframe] = useState<Timeframe>('4H');
   
   const [holdingPeriod, setHoldingPeriod] = useState('5m');
-  const [liveTickerPrice, setLiveTickerPrice] = useState<number | null>(null);
+  const [analysisReferencePrice, setAnalysisReferencePrice] = useState<number | null>(null);
   
-  // Signal processing simulation
-  const [isScanning, setIsScanning] = useState(false);
-  const [scanStep, setScanStep] = useState(0);
   const [hasGeneratedSignal, setHasGeneratedSignal] = useState(false);
   const [lockedSignal, setLockedSignal] = useState<LockedSignal | null>(null);
   const [explanationMode, setExplanationMode] = useState<'simple' | 'advanced'>('simple');
@@ -58,88 +52,27 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
   });
 
   const selectedAsset = MOCK_ASSETS.find((a) => a.id === selectedAssetId) || MOCK_ASSETS[0];
-  const holdMultiplierMap: Record<string, number> = {
-    '1m': 0.16,
-    '5m': 0.32,
-    '10m': 0.48,
-    '30m': 0.72,
-    '1H': 1,
-    '4H': 1.55
-  };
-  const holdMultiplier = holdMultiplierMap[holdingPeriod] || 1;
-  const referencePrice = liveTickerPrice || selectedAsset.price;
+  const referencePrice = analysisReferencePrice || selectedAsset.price;
   const signalPrecision = referencePrice >= 1000 ? 3 : referencePrice >= 10 ? 3 : 4;
   const formatSignalPrice = (value: number) => value.toLocaleString(undefined, {
     minimumFractionDigits: signalPrecision,
     maximumFractionDigits: signalPrecision
   });
 
-  const adjustedSignal: LockedSignal | undefined = selectedAsset.currentSignal ? (() => {
-    const signal = selectedAsset.currentSignal;
-    if (!liveTickerPrice) return undefined;
-    const chartPrice = liveTickerPrice;
-    const entryMid = chartPrice;
-    const entrySpread = chartPrice * 0.00025 * Math.max(holdMultiplier, 0.2);
-    const baseStopDistance = Math.abs(signal.entryZone[0] - signal.stopLoss) * holdMultiplier;
-    const baseTp1Distance = Math.abs(signal.takeProfit1 - signal.entryZone[0]) * holdMultiplier;
-    const baseTp2Distance = Math.abs(signal.takeProfit2 - signal.entryZone[0]) * holdMultiplier;
-    const direction = signal.action === 'SELL' ? -1 : 1;
-    return {
-      ...signal,
-      entryZone: [entryMid - entrySpread, entryMid + entrySpread] as [number, number],
-      stopLoss: entryMid - direction * baseStopDistance,
-      takeProfit1: entryMid + direction * baseTp1Distance,
-      takeProfit2: entryMid + direction * baseTp2Distance,
-      holdingDuration: holdingPeriod
-    };
-  })() : undefined;
+  const adjustedSignal: LockedSignal | undefined = buildProfessionalSignal({
+    asset: selectedAsset,
+    livePrice: analysisReferencePrice,
+    holdingPeriod,
+    timeframe: selectedTimeframe
+  });
   const displaySignal = lockedSignal || adjustedSignal;
-
-  // Handle Get AI Signal button
-  const handleGetAiSignal = () => {
-    // Check credits
-    if (user.creditsRemaining !== 'Unlimited' && user.creditsRemaining <= 0) {
-      openPricingModal();
-      return;
-    }
-
-    setIsScanning(true);
-    setScanStep(1);
-
-    setTimeout(() => setScanStep(2), 400);
-    setTimeout(() => setScanStep(3), 800);
-    setTimeout(() => setScanStep(4), 1200);
-    setTimeout(() => {
-      setIsScanning(false);
-
-      // Freeze signal levels at generation time so live ticker movement does not change entry/SL/TP.
-      setLockedSignal(adjustedSignal || null);
-      setHasGeneratedSignal(true);
-
-      // Deduct credit if not unlimited
-      if (user.creditsRemaining !== 'Unlimited' && typeof user.creditsRemaining === 'number') {
-        setUser((prev) => ({
-          ...prev,
-          creditsRemaining: typeof prev.creditsRemaining === 'number' ? Math.max(0, prev.creditsRemaining - 1) : 'Unlimited'
-        }));
-      }
-
-      if (selectedAsset.setupQuality === 'HIGH') {
-        confetti({
-          particleCount: 60,
-          spread: 70,
-          origin: { y: 0.6 }
-        });
-      }
-    }, 1600);
-  };
 
   // Switch asset
   const handleSelectAsset = (id: string) => {
     setSelectedAssetId(id);
     setHasGeneratedSignal(false);
     setLockedSignal(null);
-    setLiveTickerPrice(null);
+    setAnalysisReferencePrice(null);
   };
 
   const resetGeneratedSignal = () => {
@@ -340,12 +273,24 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
               </div>
             </div>
 
-            {/* Live Chart Container */}
+            {/* AI Screenshot Analyzer */}
             <div className="p-4 rounded-2xl bg-[#0f1420] border border-slate-800 shadow-xl space-y-4">
-              
-              {/* Chart Toolbar: Timeframes & Indicator Controls */}
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
-                {/* Timeframes */}
+                <div className="flex items-center gap-2 min-w-[220px] flex-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Pair</span>
+                  <select
+                    value={selectedAssetId}
+                    onChange={(event) => handleSelectAsset(event.target.value)}
+                    className="w-full max-w-xs rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs font-bold text-white outline-none focus:border-emerald-500"
+                  >
+                    {filteredAssets.map((asset) => (
+                      <option key={asset.id} value={asset.id}>
+                        {asset.symbol} - {asset.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 <div className="flex items-center space-x-1 bg-slate-900 p-1 rounded-lg border border-slate-800">
                   {(['15m', '1H', '4H', '1D'] as Timeframe[]).map((tf) => (
                     <button
@@ -365,7 +310,6 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
                   ))}
                 </div>
 
-                {/* Holding period selector */}
                 <div className="flex items-center gap-1 text-xs overflow-x-auto">
                   {['1m', '5m', '10m', '30m', '1H', '4H'].map((period) => (
                     <button
@@ -386,11 +330,17 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
                 </div>
               </div>
 
-              <ExchangeChartPanel
+              <ChartVisionAnalyzer
                 asset={selectedAsset}
                 timeframe={selectedTimeframe}
                 holdingPeriod={holdingPeriod}
-                onLivePriceChange={setLiveTickerPrice}
+                livePrice={analysisReferencePrice}
+                onReferencePriceChange={setAnalysisReferencePrice}
+                onUseSignal={(signal) => {
+                  setLockedSignal(signal);
+                  setHasGeneratedSignal(true);
+                  confetti({ particleCount: 50, spread: 65, origin: { y: 0.65 } });
+                }}
               />
             </div>
           </div>
@@ -412,44 +362,8 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
                 </span>
               </div>
 
-              {/* Get AI Signal Button */}
-              <div>
-                <button
-                  onClick={handleGetAiSignal}
-                  disabled={isScanning}
-                  className={`w-full py-4 rounded-xl font-extrabold text-base transition flex items-center justify-center space-x-2.5 shadow-xl ${
-                    isScanning
-                      ? 'bg-slate-800 text-slate-400 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-emerald-400 via-teal-500 to-cyan-500 text-black hover:brightness-110 shadow-emerald-500/20'
-                  }`}
-                >
-                  {isScanning ? (
-                    <>
-                      <Activity className="w-5 h-5 animate-spin text-emerald-400" />
-                      <span>Scanning 6 Quant Engines...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Zap className="w-5 h-5 fill-black" />
-                      <span>{t.getAiSignal}</span>
-                    </>
-                  )}
-                </button>
-
-                {/* Progress Animation during Scan */}
-                {isScanning && (
-                  <div className="mt-3 space-y-1.5 text-xs text-slate-300 font-mono">
-                    <div className="flex justify-between">
-                      <span>{['Step 1/5: Live Data Collection...', 'Step 2/5: Computing EMA & Support/Resistance...', 'Step 3/5: Regime Filter Evaluation...', 'Step 4/5: Scoring Risk/Reward Ratios...'][scanStep - 1] || 'Finalizing Analysis...'}</span>
-                    </div>
-                    <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
-                      <div 
-                        className="h-full bg-emerald-400 transition-all duration-300" 
-                        style={{ width: `${(scanStep / 4) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
+              <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/10 p-3 text-xs text-cyan-100 leading-relaxed">
+                Upload a chart screenshot and click <strong>Analyze Screenshot</strong>. The result below updates only after the AI vision analyzer creates a signal.
               </div>
 
               {/* 3 Core Credible Accuracy Display Boxes */}
@@ -672,9 +586,9 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
                   <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto">
                     <Sliders className="w-6 h-6" />
                   </div>
-                  <h3 className="text-sm font-bold text-white">Ready for Instant AI Evaluation</h3>
+                  <h3 className="text-sm font-bold text-white">Waiting for screenshot analysis</h3>
                   <p className="text-xs text-slate-400 leading-relaxed">
-                    Click <strong className="text-emerald-400">"Get AI Signal Now"</strong> above to launch our 6-Stage Hybrid Engine. If setup quality is high, entry targets and risk parameters will load instantly.
+                    Upload your current chart screenshot and click <strong className="text-cyan-400">Analyze Screenshot</strong>. Trendora will read the chart and generate signal choices automatically.
                   </p>
                 </div>
               )}

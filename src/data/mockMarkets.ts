@@ -186,31 +186,29 @@ export const MOCK_ASSETS: AssetData[] = [
     ema50: 73.90,
     supportZone: [70.50, 71.00],
     resistanceZone: [73.80, 74.50],
-    setupQuality: 'WEAK',
-    weakReason: 'Geopolitical OPEC+ quota statements pending within 3 hours. Standard AI bots lose 70% of trades during news spikes. Trendora restraint mode protects your capital.',
-    saferAlternatives: [
-      {
-        assetId: 'btc-usdt',
-        symbol: 'BTC/USDT',
-        name: 'Bitcoin Perpetual',
-        confidence: 99,
-        action: 'BUY',
-        reason: '99% Institutional Confluence above $67,500 order block.'
-      },
-      {
-        assetId: 'ngas-usd',
-        symbol: 'NGAS/USD',
-        name: 'Natural Gas Henry Hub',
-        confidence: 99,
-        action: 'BUY',
-        reason: 'Seasonal inventory breakout with 4.2:1 reward/risk.'
-      }
-    ],
+    setupQuality: 'HIGH',
     candles: {
       '15m': generateCandles(72.15, 0.45, 24),
       '1H': generateCandles(72.15, 0.85, 24),
       '4H': generateCandles(72.15, 1.45, 24),
       '1D': generateCandles(72.15, 2.80, 24)
+    },
+    currentSignal: {
+      action: 'SELL',
+      entryZone: [71.90, 72.25],
+      stopLoss: 73.10,
+      takeProfit1: 70.80,
+      takeProfit2: 69.60,
+      confidence: 99,
+      historicalSuccessRate: 98,
+      riskLevel: 'Zero-Ruin Shield',
+      timeframe: '1H',
+      holdingDuration: '30 to 120 Minutes (News-Sensitive Short)',
+      simpleExplanation: 'Oil is showing bearish convergence with lower highs and weak demand confirmation. SELL only after candle rejection confirms below the entry band.',
+      advancedExplanation: 'Momentum decay, bearish EMA alignment, and failed resistance retest create a short-biased setup. Risk remains shielded with invalidation above the latest swing high.',
+      similarHistory: [
+        { date: 'Recent oil setup', asset: 'WTI/USD', outcome: '+3.5% Quant Precision Hit', confidenceWhenIssued: 99 }
+      ]
     }
   },
   {
@@ -306,7 +304,9 @@ export const MOCK_ASSETS: AssetData[] = [
     ['xrp-usdt', 'XRP/USDT', 'XRP Ledger', 2.420, 'XRPUSDT'],
     ['doge-usdt', 'DOGE/USDT', 'Dogecoin', 0.1825, 'DOGEUSDT'],
     ['ada-usdt', 'ADA/USDT', 'Cardano', 0.7450, 'ADAUSDT']
-  ].map(([id, symbol, name, price, tv]) => ({
+  ].map(([id, symbol, name, price, tv], index) => {
+    const action = index % 2 === 0 ? 'SELL' as const : 'BUY' as const;
+    return ({
     id: id as string,
     symbol: symbol as string,
     name: name as string,
@@ -332,21 +332,23 @@ export const MOCK_ASSETS: AssetData[] = [
       '1D': generateCandles(price as number, Math.max((price as number) * 0.045, 0.014), 42)
     },
     currentSignal: {
-      action: 'BUY' as const,
+      action,
       entryZone: [(price as number) * 0.998, (price as number) * 1.002] as [number, number],
-      stopLoss: (price as number) * 0.985,
-      takeProfit1: (price as number) * 1.026,
-      takeProfit2: (price as number) * 1.048,
+      stopLoss: action === 'SELL' ? (price as number) * 1.015 : (price as number) * 0.985,
+      takeProfit1: action === 'SELL' ? (price as number) * 0.974 : (price as number) * 1.026,
+      takeProfit2: action === 'SELL' ? (price as number) * 0.952 : (price as number) * 1.048,
       confidence: 99,
       historicalSuccessRate: 98,
       riskLevel: 'Zero-Ruin Shield' as const,
       timeframe: '4H' as const,
       holdingDuration: '5m to 4H adaptive hold',
-      simpleExplanation: `${symbol} has multi-timeframe trend alignment and live Bitget futures candle confirmation. Signal adapts to the selected holding period.`,
-      advancedExplanation: 'Order-flow momentum, EMA stack, ATR compression, and higher-timeframe continuation agree. Use only after candle confirmation on the live chart.',
+      simpleExplanation: `${symbol} has multi-timeframe ${action === 'SELL' ? 'bearish rejection' : 'bullish continuation'} alignment and live futures candle confirmation. Signal adapts to the selected holding period.`,
+      advancedExplanation: action === 'SELL'
+        ? 'Bearish order-flow imbalance, failed resistance retest, and momentum compression agree. Use only after candle rejection confirms on the live chart.'
+        : 'Order-flow momentum, EMA stack, ATR compression, and higher-timeframe continuation agree. Use only after candle confirmation on the live chart.',
       similarHistory: [
         { date: 'Recent setup', asset: symbol as string, outcome: '+3.5% Quant Precision Hit' as const, confidenceWhenIssued: 99 }
       ]
     }
-  }))
+  });})
 ];

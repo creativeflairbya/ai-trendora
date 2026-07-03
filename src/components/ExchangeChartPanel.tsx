@@ -10,6 +10,7 @@ interface ExchangeChartPanelProps {
 }
 
 const wsUrl = 'wss://ws.bitget.com/v2/ws/public';
+const bitgetTickerUrl = 'https://api.bitget.com/api/v2/mix/market/ticker';
 
 const timeframeToInterval: Record<Timeframe, string> = {
   '15m': '15',
@@ -57,7 +58,7 @@ export const ExchangeChartPanel: React.FC<ExchangeChartPanelProps> = ({ asset, t
       theme: 'light',
       style: '1',
       hide_side_toolbar: false,
-      allow_symbol_change: true,
+      allow_symbol_change: false,
       calendar: false,
       withdateranges: true,
       studies: ['Volume@tv-basicstudies'],
@@ -72,6 +73,26 @@ export const ExchangeChartPanel: React.FC<ExchangeChartPanelProps> = ({ asset, t
     setStatus('connecting to Bitget ticker');
     onLivePriceChange(null);
     wsRef.current?.close();
+
+    const updateFromRest = async () => {
+      try {
+        const res = await fetch(`${bitgetTickerUrl}?symbol=${asset.bitgetSymbol}&productType=USDT-FUTURES`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const payload = await res.json();
+        const ticker = Array.isArray(payload.data) ? payload.data[0] : payload.data;
+        const price = Number(ticker?.lastPr || ticker?.markPrice || ticker?.bidPr || ticker?.askPr);
+        if (Number.isFinite(price) && price > 0) {
+          setLivePrice(price);
+          setStatus('Bitget REST ticker active');
+          onLivePriceChange(price);
+        }
+      } catch {
+        // WebSocket remains the primary live path.
+      }
+    };
+
+    updateFromRest();
+    const restTimer = window.setInterval(updateFromRest, 1500);
 
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
@@ -124,6 +145,7 @@ export const ExchangeChartPanel: React.FC<ExchangeChartPanelProps> = ({ asset, t
     }, 25000);
 
     return () => {
+      window.clearInterval(restTimer);
       window.clearInterval(ping);
       ws.close();
     };
