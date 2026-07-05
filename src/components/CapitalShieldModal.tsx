@@ -59,7 +59,7 @@ export const CapitalShieldModal: React.FC<CapitalShieldModalProps> = ({ onClose 
         <div className="mt-5 p-4 rounded-2xl bg-gradient-to-r from-teal-950/40 via-slate-900 to-slate-900 border border-teal-500/30 text-xs text-slate-300 space-y-2">
           <div className="flex items-center space-x-2 text-teal-400 font-bold">
             <Sparkles className="w-4 h-4" />
-            <span>How Trendora Protects All Users on All Signals</span>
+            <span>How ChartSignal AI Protects All Users on All Signals</span>
           </div>
           <p className="leading-relaxed">
             No signal is 100% immune to geopolitical swans. However, by combining our <strong className="text-white">80%+ AI probability scores</strong> with strict <strong className="text-teal-400">1% Capital Shield Allocation</strong>, mathematical ruin risk drops to 0.00%. Even after 5 consecutive loss trades, 95%+ of your bankroll remains untouched!

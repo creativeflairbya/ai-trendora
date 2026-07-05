@@ -6,10 +6,12 @@ import { buildProfessionalSignal, ProfessionalSignal } from '../utils/proSignalE
 
 interface ChartVisionAnalyzerProps {
   asset: AssetData;
+  assets: AssetData[];
   timeframe: Timeframe;
   holdingPeriod: string;
   livePrice: number | null;
   onReferencePriceChange: (price: number | null) => void;
+  onDetectedAsset: (assetId: string) => void;
   onUseSignal: (signal: ProfessionalSignal) => void;
 }
 
@@ -42,10 +44,12 @@ const tuneSignal = (signal: ProfessionalSignal, multiplier: number): Professiona
 
 export const ChartVisionAnalyzer: React.FC<ChartVisionAnalyzerProps> = ({
   asset,
+  assets,
   timeframe,
   holdingPeriod,
   livePrice,
   onReferencePriceChange,
+  onDetectedAsset,
   onUseSignal
 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -54,13 +58,18 @@ export const ChartVisionAnalyzer: React.FC<ChartVisionAnalyzerProps> = ({
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [hasAnalyzed, setHasAnalyzed] = useState(false);
   const [detectedPrice, setDetectedPrice] = useState<number | null>(null);
+  const [detectedAssetId, setDetectedAssetId] = useState<string | null>(null);
   const [analysisError, setAnalysisError] = useState('');
+
+  const activeAsset = useMemo(() => {
+    return assets.find((item) => item.id === detectedAssetId) || asset;
+  }, [asset, assets, detectedAssetId]);
 
   const referencePrice = useMemo(() => detectedPrice || livePrice || null, [detectedPrice, livePrice]);
 
   const signalChoices = useMemo<SignalChoice[]>(() => {
     if (!referencePrice) return [];
-    const base = buildProfessionalSignal({ asset, livePrice: referencePrice, holdingPeriod, timeframe });
+    const base = buildProfessionalSignal({ asset: activeAsset, livePrice: referencePrice, holdingPeriod, timeframe });
     if (!base) return [];
 
     const conservative = tuneSignal(base, 0.75) as SignalChoice;
@@ -94,23 +103,104 @@ export const ChartVisionAnalyzer: React.FC<ChartVisionAnalyzerProps> = ({
     counter.reasoning = 'Alternative if the current candle rejects the primary direction. Use only after visible reversal confirmation.';
 
     return [conservative, balanced, aggressive, counter];
-  }, [asset, holdingPeriod, referencePrice, timeframe]);
+  }, [activeAsset, holdingPeriod, referencePrice, timeframe]);
 
-  const extractPriceFromText = (text: string) => {
+  const detectAssetFromText = (text: string) => {
+    const normalized = text.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const aliases: Array<[string[], string]> = [
+      [['ETHUSDT', 'ETHUSDTPERP', 'ETHUSD', 'ETH'], 'eth-usdt'],
+      [['BTCUSDT', 'BTCUSDTPERP', 'BTCUSD', 'BTC'], 'btc-usdt'],
+      [['SOLUSDT', 'SOLUSDTPERP', 'SOL'], 'sol-usdt'],
+      [['BNBUSDT', 'BNB'], 'bnb-usdt'],
+      [['XRPUSDT', 'XRP'], 'xrp-usdt'],
+      [['DOGEUSDT', 'DOGE'], 'doge-usdt'],
+      [['ADAUSDT', 'ADA'], 'ada-usdt'],
+      [['XAUUSD', 'XAUUSDT', 'GOLD'], 'xau-usd'],
+      [['XAGUSD', 'XAGUSDT', 'SILVER'], 'xag-usd'],
+      [['NATGASUSDT', 'NGAS', 'NATGAS', 'GAS'], 'ngas-usd'],
+      [['CLUSDT', 'WTI', 'USOIL', 'OIL'], 'wti-oil']
+    ];
+
+    for (const [keys, id] of aliases) {
+      if (keys.some((key) => normalized.includes(key))) {
+        return assets.find((item) => item.id === id) || null;
+      }
+    }
+    return null;
+  };
+
+  const isPlausiblePrice = (value: number, priceAsset: AssetData) => {
+    if (!Number.isFinite(value) || value <= 0) return false;
+    return value >= priceAsset.price * 0.35 && value <= priceAsset.price * 2.2;
+  };
+
+  const extractPriceFromText = (text: string, priceAsset: AssetData) => {
     const cleaned = text.replace(/\s+/g, ' ');
-    const closeMatch = cleaned.match(/\bC\s*[:=]?\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]+)?|[0-9]+(?:\.[0-9]+)?)/i);
-    if (closeMatch?.[1]) {
-      const value = Number(closeMatch[1].replace(/,/g, ''));
-      if (Number.isFinite(value) && value > 0) return value;
+    const parse = (value?: string | null) => Number(String(value || '').replace(/,/g, ''));
+
+    const explicitCurrentPatterns = [
+      /(?:last\s*price|current\s*price|mark\s*price)\D{0,30}([0-9,]+(?:\.\d{2,5}))/i,
+      /(?:price\s*[:=])\D{0,15}([0-9,]+(?:\.\d{2,5}))/i
+    ];
+
+    for (const pattern of explicitCurrentPatterns) {
+      const match = cleaned.match(pattern);
+      const value = parse(match?.[1]);
+      if (isPlausiblePrice(value, priceAsset)) return value;
     }
 
-    const values = Array.from(cleaned.matchAll(/(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{2,5})/g))
-      .map((match) => Number(match[0].replace(/,/g, '')))
-      .filter((value) => Number.isFinite(value) && value > 0);
+    // Prefer a real OHLC close pattern. This avoids accidental matches like "C 24" from UI labels.
+    const ohlcPatterns = [
+      /\bO\s*([0-9,]+(?:\.\d+)?)\s+H\s*([0-9,]+(?:\.\d+)?)\s+L\s*([0-9,]+(?:\.\d+)?)\s+C\s*([0-9,]+(?:\.\d+)?)/i,
+      /\bO\s*[:=]?\s*([0-9,]+(?:\.\d+)?).*?H\s*[:=]?\s*([0-9,]+(?:\.\d+)?).*?L\s*[:=]?\s*([0-9,]+(?:\.\d+)?).*?C\s*[:=]?\s*([0-9,]+(?:\.\d+)?)/i
+    ];
 
-    const plausible = values.filter((value) => value >= asset.price * 0.65 && value <= asset.price * 1.45);
-    if (plausible.length === 0) return null;
-    return plausible[plausible.length - 1];
+    for (const pattern of ohlcPatterns) {
+      const match = cleaned.match(pattern);
+      const close = parse(match?.[4]);
+      if (isPlausiblePrice(close, priceAsset)) return close;
+    }
+
+    const closeMatch = cleaned.match(/\bC\s*[:=]?\s*([0-9,]+(?:\.\d{2,5}))/i);
+    const closeValue = parse(closeMatch?.[1]);
+    if (isPlausiblePrice(closeValue, priceAsset)) return closeValue;
+
+    const lastPriceMatch = cleaned.match(/(?:last\s*price|price)\D{0,12}([0-9,]+(?:\.\d{2,5}))/i);
+    const lastPriceValue = parse(lastPriceMatch?.[1]);
+    if (isPlausiblePrice(lastPriceValue, priceAsset)) return lastPriceValue;
+
+    const values = Array.from(cleaned.matchAll(/(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{2,5})/g))
+      .map((match) => parse(match[0]))
+      .filter((value) => isPlausiblePrice(value, priceAsset));
+
+    if (values.length === 0) return null;
+
+    // Exchange screenshots often show order book/current price on the right side. The latest visible
+    // OCR numbers are usually closest to that section, while MA/support labels appear earlier.
+    const highTail = values.slice(Math.max(0, values.length - 10));
+    const assetReference = priceAsset.price;
+    const nearReferenceTail = highTail
+      .filter((value) => Math.abs(value - assetReference) / assetReference < 0.12)
+      .sort((a, b) => Math.abs(a - assetReference) - Math.abs(b - assetReference));
+
+    if (nearReferenceTail.length > 0) return nearReferenceTail[0];
+
+    const nearReferenceAll = values
+      .filter((value) => Math.abs(value - assetReference) / assetReference < 0.12)
+      .sort((a, b) => Math.abs(a - assetReference) - Math.abs(b - assetReference));
+
+    if (nearReferenceAll.length > 0) return nearReferenceAll[0];
+
+    // Pick the densest price cluster. Axis labels appear once; actual bid/ask/OHLC values repeat around the real price.
+    const sorted = [...values].sort((a, b) => a - b);
+    let bestCluster: number[] = [sorted[0]];
+    for (const value of sorted) {
+      const tolerance = Math.max(value * 0.015, 0.02);
+      const cluster = sorted.filter((candidate) => Math.abs(candidate - value) <= tolerance);
+      if (cluster.length > bestCluster.length) bestCluster = cluster;
+    }
+
+    return bestCluster[Math.floor(bestCluster.length / 2)];
   };
 
   const analyzeFile = async (file: File) => {
@@ -118,13 +208,22 @@ export const ChartVisionAnalyzer: React.FC<ChartVisionAnalyzerProps> = ({
     setAnalysisError('');
     setHasAnalyzed(false);
     setDetectedPrice(null);
+    setDetectedAssetId(null);
     onReferencePriceChange(null);
 
     try {
       const result = await Tesseract.recognize(file, 'eng');
-      const price = extractPriceFromText(result.data.text || '');
+      const text = result.data.text || '';
+      const detectedAsset = detectAssetFromText(text);
+      if (detectedAsset && detectedAsset.id !== asset.id) {
+        setDetectedAssetId(detectedAsset.id);
+        onDetectedAsset(detectedAsset.id);
+      } else if (detectedAsset) {
+        setDetectedAssetId(detectedAsset.id);
+      }
+      const price = extractPriceFromText(text, detectedAsset || asset);
       if (!price) {
-        setAnalysisError('AI could not read the current chart price clearly. Please upload a clearer chart screenshot with the top OHLC/price visible.');
+        setAnalysisError('AI could not read a reliable current chart price. Please upload a clearer screenshot with the symbol and OHLC/current price visible.');
         return;
       }
       setDetectedPrice(price);
@@ -200,7 +299,7 @@ export const ChartVisionAnalyzer: React.FC<ChartVisionAnalyzerProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3">
             <div className="rounded-xl border border-slate-800 bg-slate-900 p-3 text-xs text-slate-300">
               <div className="font-bold text-white">
-                {detectedPrice ? `Detected chart price: ${detectedPrice.toLocaleString()}` : 'AI will read the screenshot and extract the chart price.'}
+                {detectedPrice ? `Detected ${activeAsset.symbol} chart price: ${detectedPrice.toLocaleString()}` : 'AI will read the screenshot and extract the chart price.'}
               </div>
               <div className="mt-1 text-slate-500">No manual price entry needed.</div>
             </div>
@@ -218,6 +317,16 @@ export const ChartVisionAnalyzer: React.FC<ChartVisionAnalyzerProps> = ({
             <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-100 flex gap-2">
               <AlertTriangle className="h-4 w-4 shrink-0 text-rose-400" />
               <span>{analysisError}</span>
+            </div>
+          )}
+
+          {hasAnalyzed && !analysisError && (
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-100 flex gap-2">
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+              <span>
+                Detected chart: <strong>{activeAsset.symbol}</strong>
+                {detectedPrice ? ` at ${detectedPrice.toLocaleString()}` : ''}. Signal choices below use this detected chart context.
+              </span>
             </div>
           )}
 

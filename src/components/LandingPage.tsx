@@ -81,86 +81,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
         </div>
 
-        {/* Interactive App Terminal Showcase */}
-        <div className="mt-16 max-w-5xl mx-auto rounded-3xl bg-[#0f1420] border border-slate-800 p-4 sm:p-8 shadow-2xl relative text-left">
-          <div className="flex items-center justify-between border-b border-slate-800/80 pb-4 mb-6">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-rose-500" />
-              <div className="w-3 h-3 rounded-full bg-amber-500" />
-              <div className="w-3 h-3 rounded-full bg-emerald-500" />
-              <span className="ml-2 text-xs font-mono text-slate-400">trendora-app-engine :: live-preview</span>
-            </div>
-            <div className="flex items-center space-x-2 text-xs text-emerald-400 font-mono font-bold bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
-              <span>CONFIDENCE SCORING: ACTIVE</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Asset card 1: BTC */}
-            <div className="bg-slate-900/80 border border-emerald-500/40 rounded-2xl p-5 relative overflow-hidden">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-bold text-white">BTC/USDT</span>
-                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-xs font-bold">99% CONFLUENCE</span>
-              </div>
-              <div className="text-2xl font-mono font-extrabold text-white mb-2">$67,840.50</div>
-              <div className="space-y-2 text-xs text-slate-300">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Confidence Meter:</span>
-                  <span className="text-emerald-400 font-bold font-mono">99% Confidence</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Holding Duration:</span>
-                  <span className="text-slate-200 font-mono">2 to 6 Hours</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Action:</span>
-                  <span className="text-emerald-400 font-bold">BUY ($67.5k - $67.9k)</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Asset card 2: Gold */}
-            <div className="bg-slate-900/80 border border-teal-500/40 rounded-2xl p-5">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-bold text-white">XAU/USD (Gold)</span>
-                <span className="px-2 py-0.5 rounded bg-teal-500/20 text-teal-400 text-xs font-bold">99% CONFLUENCE</span>
-              </div>
-              <div className="text-2xl font-mono font-extrabold text-white mb-2">$3,012.40</div>
-              <div className="space-y-2 text-xs text-slate-300">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Confidence Meter:</span>
-                  <span className="text-teal-400 font-bold font-mono">99% Confidence</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Holding Duration:</span>
-                  <span className="text-slate-200 font-mono">45 - 90 Minutes</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Action:</span>
-                  <span className="text-teal-400 font-bold">BUY ($3,006 - $3,014)</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Asset card 3: Oil (Restraint Example) */}
-            <div className="bg-slate-900/80 border border-amber-500/40 rounded-2xl p-5">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-bold text-white">WTI Oil</span>
-                <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 text-xs font-bold">WEAK SETUP</span>
-              </div>
-              <div className="text-2xl font-mono font-extrabold text-slate-300 mb-2">$71.65</div>
-              <div className="space-y-2 text-xs text-slate-300">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Market Status:</span>
-                  <span className="text-amber-400 font-bold">AVOID / NEWS VOLATILE</span>
-                </div>
-                <div className="p-2 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[11px]">
-                  <strong>System Restraint:</strong> No safe setup right now. AI recommends switching to Gold or BTC.
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </section>
 
       {/* Core Product Philosophy & Restraint Banner */}
@@ -175,12 +95,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               Why We Say <span className="text-amber-400">“WAIT”</span> When Other Bots Lie
             </h2>
             <p className="mt-4 text-slate-300 leading-relaxed text-sm sm:text-base">
-              To make users truly profitable over months and years, an expert AI system should never force a blind trade. Trendora’s engine is built with honesty first:
+              To make users truly profitable over months and years, an expert AI system should never force a blind trade. ChartSignal AI is built with honesty first:
             </p>
             <ul className="mt-6 space-y-3.5 text-sm text-slate-300">
               <li className="flex items-start space-x-3">
                 <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
-                <span><strong>No Forced Signals:</strong> If volatility or news spikes make a chart unpredictable, Trendora declares <span className="text-amber-400 font-bold">AVOID / WAIT</span>.</span>
+                <span><strong>No Forced Signals:</strong> If volatility or news spikes make a chart unpredictable, ChartSignal AI declares <span className="text-amber-400 font-bold">AVOID / WAIT</span>.</span>
               </li>
               <li className="flex items-start space-x-3">
                 <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />

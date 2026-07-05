@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigation } from './components/Navigation';
 import { LandingPage } from './components/LandingPage';
 import { SignalEnginePage } from './components/SignalEnginePage';
@@ -17,6 +17,13 @@ export default function App() {
 
   // Initialize with Unrestricted Master Account by default
   const [user, setUser] = useState<UserProfile>(ACCOUNT_PRESETS.master);
+
+  useEffect(() => {
+    if (window.location.pathname !== '/') {
+      window.history.replaceState({}, '', '/');
+      setCurrentTab('home');
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#0b0e14] text-slate-100 selection:bg-emerald-500 selection:text-black">

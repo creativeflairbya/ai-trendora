@@ -2,9 +2,9 @@ import { LanguageCode } from '../types';
 
 export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
   en: {
-    appTitle: 'Trendora AI',
+    appTitle: 'ChartSignal AI',
     tagline: 'AI Signals. Simple Decisions.',
-    subTagline: 'Trendora helps everyday users analyze crypto, gold, oil, and silver with live charts, confidence-based AI signals, and beginner-friendly guidance.',
+    subTagline: 'ChartSignal AI helps everyday users analyze crypto, gold, oil, and silver with chart screenshots, confidence-based AI signals, and beginner-friendly guidance.',
     navHome: 'Home',
     navTerminal: 'AI Signal Terminal',
     navScanner: 'Daily Scanner',
@@ -46,7 +46,7 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     avoid: 'Avoid / Volatile News'
   },
   es: {
-    appTitle: 'Trendora AI',
+    appTitle: 'ChartSignal AI',
     tagline: 'Señales IA. Decisiones Simples.',
     subTagline: 'Analiza cripto, oro, petróleo y plata con gráficos en vivo y señales impulsadas por IA de alta precisión.',
     navHome: 'Inicio',
@@ -178,7 +178,7 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     avoid: 'گریز کریں / تیز خبریں'
   },
   fr: {
-    appTitle: 'Trendora AI',
+    appTitle: 'ChartSignal AI',
     tagline: 'Signaux IA. Décisions Simples.',
     subTagline: 'Analysez les cryptos, l\'or, le pétrole et l\'argent avec des graphiques en direct et des signaux IA de haute précision.',
     navHome: 'Accueil',

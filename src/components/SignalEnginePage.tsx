@@ -332,10 +332,12 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
 
               <ChartVisionAnalyzer
                 asset={selectedAsset}
+                assets={MOCK_ASSETS}
                 timeframe={selectedTimeframe}
                 holdingPeriod={holdingPeriod}
                 livePrice={analysisReferencePrice}
                 onReferencePriceChange={setAnalysisReferencePrice}
+                onDetectedAsset={(assetId) => handleSelectAsset(assetId)}
                 onUseSignal={(signal) => {
                   setLockedSignal(signal);
                   setHasGeneratedSignal(true);
@@ -528,7 +530,7 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
                       <AlertTriangle className="w-6 h-6 text-amber-400 mx-auto" />
                       <div className="font-bold text-amber-300 text-sm">Live ticker required</div>
                       <p className="text-xs text-slate-300 leading-relaxed">
-                        Wait for the Bitget live ticker to connect. Trendora will not invent price levels or generate a chart-based signal without a live exchange quote.
+                        Wait for the Bitget live ticker to connect. ChartSignal AI will not invent price levels or generate a chart-based signal without a live exchange quote.
                       </p>
                     </div>
                   </div>
@@ -588,7 +590,7 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
                   </div>
                   <h3 className="text-sm font-bold text-white">Waiting for screenshot analysis</h3>
                   <p className="text-xs text-slate-400 leading-relaxed">
-                    Upload your current chart screenshot and click <strong className="text-cyan-400">Analyze Screenshot</strong>. Trendora will read the chart and generate signal choices automatically.
+                    Upload your current chart screenshot and click <strong className="text-cyan-400">Analyze Screenshot</strong>. ChartSignal AI will read the chart and generate signal choices automatically.
                   </p>
                 </div>
               )}

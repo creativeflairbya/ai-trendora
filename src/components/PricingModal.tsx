@@ -218,7 +218,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({ onClose, user, setUs
                 <div className="text-xs text-slate-300 space-y-1">
                   <div className="font-bold text-amber-400">USDT TRC20 Fast Pay</div>
                   <div className="font-mono bg-slate-950 p-2 rounded border border-slate-800 text-[11px]">
-                    Address: TL8x92mKA...TrendoraPayAI
+                    Address: TL8x92mKA...ChartSignalPay
                   </div>
                 </div>
               )}
@@ -226,7 +226,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({ onClose, user, setUs
               {paymentMethod === 'bank' && (
                 <div className="text-xs text-slate-300 space-y-1">
                   <div className="font-bold text-blue-400">Direct Bank Reconciliation</div>
-                  <div>Account Title: Trendora Technologies AI • IBAN: PK88MEZN••••••••</div>
+                  <div>Account Title: ChartSignal AI Technologies • IBAN: PK88MEZN••••••••</div>
                 </div>
               )}
             </div>

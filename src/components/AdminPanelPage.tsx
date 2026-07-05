@@ -53,7 +53,7 @@ export const AdminPanelPage: React.FC = () => {
     status: 'Active' | 'Suspended';
     expiry: string;
   }>>([
-    { id: '1', name: 'Zayn Malik', email: 'zayn@trendora.io', plan: 'Unlimited VIP', credits: 'Unlimited', lang: 'EN', status: 'Active', expiry: 'Never' },
+    { id: '1', name: 'Zayn Malik', email: 'zayn@chartsignal.ai', plan: 'Unlimited VIP', credits: 'Unlimited', lang: 'EN', status: 'Active', expiry: 'Never' },
     { id: '2', name: 'Ahmad Raza', email: 'ahmad@pk-traders.com', plan: 'Active Trader', credits: 18, lang: 'UR', status: 'Active', expiry: '2026-08-30' },
     { id: '3', name: 'Carlos Mendoza', email: 'carlos@mx-crypto.es', plan: 'Pro Trader', credits: 94, lang: 'ES', status: 'Active', expiry: '2026-09-15' },
     { id: '4', name: 'Fatima Al-Sayed', email: 'fatima@gulfinvest.ae', plan: 'Starter Pass', credits: 4, lang: 'AR', status: 'Active', expiry: '2026-07-15' },
@@ -184,12 +184,12 @@ export const AdminPanelPage: React.FC = () => {
                 <span>SUPERIOR ARCHITECTURE ANALYSIS</span>
               </div>
               <span className="px-3 py-1 rounded-full bg-emerald-500 text-black font-extrabold text-xs font-mono">
-                Trendora 99% Confluence Engine
+                ChartSignal AI 99% Confluence Engine
               </span>
             </div>
 
             <h2 className="text-2xl font-extrabold text-white tracking-tight">
-              Why Trendora Focuses on Safer High-Confluence Setups
+              Why ChartSignal AI Focuses on Safer High-Confluence Setups
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs leading-relaxed text-slate-300">
@@ -201,9 +201,9 @@ export const AdminPanelPage: React.FC = () => {
               </div>
 
               <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-2">
-                <div className="font-bold text-emerald-400 text-sm">🟢 Trendora v5.0 Quantum Hybrid Quant Engine (99% Confluence)</div>
+                <div className="font-bold text-emerald-400 text-sm">ChartSignal AI v5.0 Quantum Hybrid Quant Engine (99% Confluence)</div>
                 <p>
-                  Combines a 7-Layer Deterministic Quant Engine (SMC Order Blocks, XGBoost Volatility Compression, Live Orderbook Imbalance) with natural language explanation. If market regime is unpredictable, Trendora declares <strong className="text-amber-400 font-bold">WAIT / RESTRICTED</strong> or routes to a verified 99% opportunity. Plus built-in 1% Capital Shield guarantees zero ruin risk!
+                  Combines a 7-Layer Deterministic Quant Engine (SMC Order Blocks, XGBoost Volatility Compression, Live Orderbook Imbalance) with natural language explanation. If market regime is unpredictable, ChartSignal AI declares <strong className="text-amber-400 font-bold">WAIT / RESTRICTED</strong> or routes to a verified 99% opportunity. Plus built-in 1% Capital Shield guarantees zero ruin risk!
                 </p>
               </div>
             </div>
@@ -612,7 +612,7 @@ export const AdminPanelPage: React.FC = () => {
           <div>
             <h2 className="text-xl font-extrabold text-white">Standalone Server Database Export</h2>
             <p className="text-xs text-slate-400 mt-1">
-              Download complete production PostgreSQL schema files (`trendora_db_schema.sql`) and JSON backup files (`trendora_data_dump.json`) to deploy Trendora directly to your private server.
+              Download complete production PostgreSQL schema files (`chartsignal_db_schema.sql`) and JSON backup files (`chartsignal_data_dump.json`) to deploy ChartSignal AI directly to your private server.
             </p>
           </div>
 
@@ -625,11 +625,11 @@ export const AdminPanelPage: React.FC = () => {
                 </p>
               </div>
               <button
-                onClick={() => handleDownloadFile(GENERATE_SQL_SCHEMA(), 'trendora_db_schema.sql', 'text/sql')}
+                onClick={() => handleDownloadFile(GENERATE_SQL_SCHEMA(), 'chartsignal_db_schema.sql', 'text/sql')}
                 className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition flex items-center justify-center space-x-2"
               >
                 <Download className="w-4 h-4" />
-                <span>Download SQL Schema (`trendora_db_schema.sql`)</span>
+                <span>Download SQL Schema (`chartsignal_db_schema.sql`)</span>
               </button>
             </div>
 
@@ -641,11 +641,11 @@ export const AdminPanelPage: React.FC = () => {
                 </p>
               </div>
               <button
-                onClick={() => handleDownloadFile(GENERATE_JSON_DUMP(), 'trendora_data_dump.json', 'application/json')}
+                onClick={() => handleDownloadFile(GENERATE_JSON_DUMP(), 'chartsignal_data_dump.json', 'application/json')}
                 className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs transition flex items-center justify-center space-x-2"
               >
                 <Download className="w-4 h-4" />
-                <span>Download JSON Backup (`trendora_data_dump.json`)</span>
+                <span>Download JSON Backup (`chartsignal_data_dump.json`)</span>
               </button>
             </div>
           </div>
