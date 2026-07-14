@@ -6,7 +6,7 @@ export const ACCOUNT_PRESETS: Record<string, UserProfile> = {
   master: {
     id: 'usr_master_super_admin_001',
     name: 'Master Account (Unrestricted VIP)',
-    email: 'master@trendora.ai',
+    email: 'admin@chartanalyst.ai',
     role: 'SUPER_ADMIN',
     isMasterAccount: true,
     planId: 'unlimited',

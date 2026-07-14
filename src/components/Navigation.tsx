@@ -10,8 +10,7 @@ import {
   Zap,
   BookOpen,
   CreditCard,
-  ChevronDown,
-  Crown
+  ChevronDown
 } from 'lucide-react';
 import { LanguageCode, UserProfile } from '../types';
 import { MOCK_ASSETS } from '../data/mockMarkets';
@@ -68,19 +67,6 @@ export const Navigation: React.FC<NavigationProps> = ({
           </div>
         </div>
 
-        {/* Master Account Quick Indicator */}
-        <div className="hidden xl:flex items-center space-x-2 pl-4 border-l border-slate-800 shrink-0">
-          {user.isMasterAccount ? (
-            <span className="px-2 py-0.5 rounded bg-amber-400/20 text-amber-400 border border-amber-400/40 text-[10px] font-bold flex items-center space-x-1 animate-pulse">
-              <Crown className="w-3 h-3 text-amber-400" />
-              <span>UNRESTRICTED MASTER ACCOUNT ACTIVE</span>
-            </span>
-          ) : (
-            <span className="text-[10px] text-slate-400">
-              Role: <strong className="text-emerald-400">{user.role}</strong>
-            </span>
-          )}
-        </div>
       </div>
 
       {/* Main App Nav */}
@@ -191,12 +177,6 @@ export const Navigation: React.FC<NavigationProps> = ({
               <span>Shield Calc</span>
             </button>
             
-            {user.isMasterAccount && (
-              <div className="hidden lg:flex items-center gap-1 rounded-lg border border-amber-400/40 bg-amber-400/10 px-3 py-1.5 text-xs font-bold text-amber-300">
-                <Crown className="h-3.5 w-3.5" /> Master
-              </div>
-            )}
-
             {/* Language Switcher */}
             <div className="relative">
               <button
