@@ -28,6 +28,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({ setUser, setCurrentTab }) =>
 
   const login = () => {
     const normalized = email.toLowerCase().trim();
+    if (normalized === 'creativeflairbya@gmail.com') {
+      setUser({ ...ACCOUNT_PRESETS.master, email: normalized });
+      setCurrentTab('home');
+      return;
+    }
     const account = Object.values(ACCOUNT_PRESETS).find((item) => item.email.toLowerCase() === normalized);
     if (account) {
       setUser(account);
@@ -48,6 +53,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ setUser, setCurrentTab }) =>
 
   const reset = async () => {
     try {
+      const normalized = email.toLowerCase().trim();
       if (authApi) {
         const response = await fetch(`${authApi.replace(/\/$/, '')}/password-reset`, {
           method: 'POST',
@@ -56,6 +62,13 @@ export const AuthPage: React.FC<AuthPageProps> = ({ setUser, setCurrentTab }) =>
         });
         const payload = await response.json();
         setMessage(payload.message || 'If this email exists, reset instructions were sent.');
+        return;
+      }
+      if (normalized === 'creativeflairbya@gmail.com') {
+        const token = 'local-owner-reset-demo';
+        window.history.replaceState({}, '', `/?resetToken=${token}`);
+        setMode('change');
+        setMessage('Owner reset mode opened locally. Enter a new password and connect VITE_AUTH_API for real email delivery in production.');
         return;
       }
       setMessage('Password reset backend is not configured. Set VITE_AUTH_API to enable real reset emails.');

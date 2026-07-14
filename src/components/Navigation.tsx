@@ -11,12 +11,10 @@ import {
   BookOpen,
   CreditCard,
   ChevronDown,
-  Crown,
-  UserCheck
+  Crown
 } from 'lucide-react';
 import { LanguageCode, UserProfile } from '../types';
 import { MOCK_ASSETS } from '../data/mockMarkets';
-import { ACCOUNT_PRESETS } from '../data/serverConfig';
 
 interface NavigationProps {
   currentTab: string;
@@ -36,7 +34,6 @@ export const Navigation: React.FC<NavigationProps> = ({
   openCapitalShield
 }) => {
   const [showLangMenu, setShowLangMenu] = useState(false);
-  const [showAccountMenu, setShowAccountMenu] = useState(false);
   const languages: { code: LanguageCode; label: string; flag: string }[] = [
     { code: 'en', label: 'English (US)', flag: '🇺🇸' },
     { code: 'es', label: 'Español', flag: '🇪🇸' },
@@ -194,95 +191,11 @@ export const Navigation: React.FC<NavigationProps> = ({
               <span>Shield Calc</span>
             </button>
             
-            {/* Account Role Switcher Menu */}
-            <div className="relative">
-              <button
-                onClick={() => setShowAccountMenu(!showAccountMenu)}
-                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition ${
-                  user.isMasterAccount
-                    ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-black border-amber-300 shadow-md shadow-amber-500/20'
-                    : 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
-                }`}
-                title="Switch Account Preset"
-              >
-                {user.isMasterAccount ? <Crown className="w-3.5 h-3.5 text-black" /> : <UserCheck className="w-3.5 h-3.5 text-emerald-400" />}
-                <span className="hidden md:inline">{user.isMasterAccount ? 'Master Admin' : user.role.split('_')[0]}</span>
-                <ChevronDown className="w-3 h-3 opacity-70" />
-              </button>
-
-              {showAccountMenu && (
-                <div className="absolute right-0 mt-2 w-64 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-2 z-50 animate-fadeIn">
-                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800">
-                    Switch Test Account Preset
-                  </div>
-
-                  <div className="mt-1 space-y-1">
-                    <button
-                      onClick={() => {
-                        setUser(ACCOUNT_PRESETS.master);
-                        setShowAccountMenu(false);
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition ${
-                        user.isMasterAccount ? 'bg-amber-400/20 border border-amber-400/40 text-amber-300 font-bold' : 'hover:bg-slate-800 text-slate-300'
-                      }`}
-                    >
-                      <div className="flex items-center space-x-2">
-                        <Crown className="w-4 h-4 text-amber-400 shrink-0" />
-                        <div>
-                          <div>Master Super Admin</div>
-                          <div className="text-[10px] text-slate-400">All Abilities Unrestricted</div>
-                        </div>
-                      </div>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setUser(ACCOUNT_PRESETS.pro);
-                        setShowAccountMenu(false);
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition ${
-                        user.role === 'PRO_TRADER' ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-bold' : 'hover:bg-slate-800 text-slate-300'
-                      }`}
-                    >
-                      <div>
-                        <div>Pro Trader ($29.99/mo)</div>
-                        <div className="text-[10px] text-slate-400">120 Signals + Quant Engine</div>
-                      </div>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setUser(ACCOUNT_PRESETS.starter);
-                        setShowAccountMenu(false);
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition ${
-                        user.role === 'STARTER_USER' ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-bold' : 'hover:bg-slate-800 text-slate-300'
-                      }`}
-                    >
-                      <div>
-                        <div>Starter Pass ($2.99)</div>
-                        <div className="text-[10px] text-slate-400">12 Signals / 7 Days</div>
-                      </div>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setUser(ACCOUNT_PRESETS.free);
-                        setShowAccountMenu(false);
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition ${
-                        user.role === 'FREE_USER' ? 'bg-slate-800 text-slate-300 font-bold' : 'hover:bg-slate-800 text-slate-400'
-                      }`}
-                    >
-                      <div>
-                        <div>Free Tier Beginner</div>
-                        <div className="text-[10px] text-slate-400">3 Signals Total</div>
-                      </div>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+            {user.isMasterAccount && (
+              <div className="hidden lg:flex items-center gap-1 rounded-lg border border-amber-400/40 bg-amber-400/10 px-3 py-1.5 text-xs font-bold text-amber-300">
+                <Crown className="h-3.5 w-3.5" /> Master
+              </div>
+            )}
 
             {/* Language Switcher */}
             <div className="relative">
