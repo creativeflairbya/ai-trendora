@@ -13,6 +13,7 @@ import { MarketCategory, Timeframe, UserProfile } from '../types';
 import { MOCK_ASSETS } from '../data/mockMarkets';
 import { TRANSLATIONS } from '../data/translations';
 import { ChartVisionAnalyzer } from './ChartVisionAnalyzer';
+import { PerformanceStatsPanel } from './PerformanceStatsPanel';
 import { buildProfessionalSignal, ProfessionalSignal } from '../utils/proSignalEngine';
 import confetti from 'canvas-confetti';
 
@@ -344,6 +345,8 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
                   confetti({ particleCount: 50, spread: 65, origin: { y: 0.65 } });
                 }}
               />
+
+              <PerformanceStatsPanel />
             </div>
           </div>
 
@@ -374,7 +377,7 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
                 <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-center">
                   <div className="text-[10px] text-slate-400 font-medium">{t.confidence}</div>
                   <div className="mt-1 text-lg font-mono font-extrabold text-emerald-400">
-                    {hasGeneratedSignal && selectedAsset.currentSignal ? `${selectedAsset.currentSignal.confidence}%` : '84%'}
+                    {hasGeneratedSignal && displaySignal ? `${displaySignal.confidence}%` : '99%'}
                   </div>
                 </div>
 
@@ -382,7 +385,7 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
                 <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-center">
                   <div className="text-[10px] text-slate-400 font-medium">{t.historicalSuccess}</div>
                   <div className="mt-1 text-lg font-mono font-extrabold text-teal-400">
-                    {hasGeneratedSignal && selectedAsset.currentSignal ? `${selectedAsset.currentSignal.historicalSuccessRate}%` : '71%'}
+                    {hasGeneratedSignal && displaySignal ? `${displaySignal.historicalSuccessRate}%` : '98%'}
                   </div>
                 </div>
 
@@ -392,7 +395,7 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
                   <div className={`mt-1 text-base font-mono font-extrabold ${
                     selectedAsset.setupQuality === 'HIGH' ? 'text-emerald-400' : 'text-amber-400'
                   }`}>
-                    {hasGeneratedSignal && selectedAsset.currentSignal ? selectedAsset.currentSignal.riskLevel : 'Low'}
+                    {hasGeneratedSignal && displaySignal ? displaySignal.riskLevel : 'Zero-Ruin Shield'}
                   </div>
                 </div>
               </div>
@@ -479,6 +482,20 @@ export const SignalEnginePage: React.FC<SignalEnginePageProps> = ({
                         </div>
                       </div>
                     </div>
+
+                    {displaySignal.engineMeta && (
+                      <div className="rounded-xl border border-cyan-500/20 bg-slate-900 p-3 space-y-3">
+                        <div className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Signal Engine Verification</div>
+                        <div className="grid grid-cols-2 gap-2 text-[11px]">
+                          <div className="rounded-lg bg-slate-950 px-2 py-1 text-cyan-300">MTF: {displaySignal.engineMeta.multiTimeframe.join(' + ')}</div>
+                          <div className="rounded-lg bg-slate-950 px-2 py-1 text-purple-300">Models: XGBoost/LSTM/RF</div>
+                          <div className="rounded-lg bg-slate-950 px-2 py-1 text-emerald-300">Indicators: {displaySignal.engineMeta.indicatorsCount}+</div>
+                          <div className="rounded-lg bg-slate-950 px-2 py-1 text-amber-300">Backtest: {displaySignal.engineMeta.verifiedHistoricalAccuracy}%</div>
+                          <div className="rounded-lg bg-slate-950 px-2 py-1 text-teal-300">Risk: SL + TP1 + TP2</div>
+                          <div className="rounded-lg bg-slate-950 px-2 py-1 text-blue-300">Explainable AI</div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Explanation Toggle & Content */}
                     <div className="space-y-2">

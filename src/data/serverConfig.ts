@@ -70,6 +70,8 @@ export const DEFAULT_ADMIN_PAYMENT_CONFIG: AdminPaymentConfig = {
   easypaisaAccountTitle: 'Trendora AI Solutions PK',
   jazzcashTillNumber: '0301-4433221 (Till: 55219)',
   jazzcashAccountTitle: 'Trendora Market Intelligence',
+  sadapayAccountNumber: '0302-1122334',
+  sadapayAccountTitle: 'ChartSignal AI',
   binancePayTrc20Address: 'TL8x92mKA982PqxR92TrendoraPayAI99',
   binanceMerchantId: 'MERCHANT_ID_88421990',
   bankAccountTitle: 'Trendora Technologies Pvt Ltd',

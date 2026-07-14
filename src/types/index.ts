@@ -50,6 +50,17 @@ export interface AssetData {
     riskLevel: 'Zero-Ruin Shield' | 'Low' | 'Medium' | 'High';
     timeframe: Timeframe;
     holdingDuration: string;
+    engineMeta?: {
+      multiTimeframe: string[];
+      ensembleModels: string[];
+      indicatorsCount: number;
+      backtestWindow: string;
+      verifiedHistoricalAccuracy: number;
+      liveUpdateMode: string;
+      explainability: string[];
+      riskManagement: string[];
+      freeTierIncluded: boolean;
+    };
     simpleExplanation: string;
     advancedExplanation: string;
     similarHistory: {
@@ -104,6 +115,8 @@ export interface AdminPaymentConfig {
   easypaisaAccountTitle: string;
   jazzcashTillNumber: string;
   jazzcashAccountTitle: string;
+  sadapayAccountNumber: string;
+  sadapayAccountTitle: string;
   binancePayTrc20Address: string;
   binanceMerchantId: string;
   bankAccountTitle: string;

@@ -10,7 +10,7 @@ interface PricingModalProps {
   setUser: React.Dispatch<React.SetStateAction<UserProfile>>;
 }
 
-type PaymentMethod = 'card' | 'easypaisa' | 'jazzcash' | 'usdt' | 'bank';
+type PaymentMethod = 'card' | 'easypaisa' | 'jazzcash' | 'sadapay' | 'usdt' | 'bank';
 
 export const PricingModal: React.FC<PricingModalProps> = ({ onClose, user, setUser }) => {
   const [selectedPlanId, setSelectedPlanId] = useState<string>(user.planId || 'active');
@@ -167,6 +167,16 @@ export const PricingModal: React.FC<PricingModalProps> = ({ onClose, user, setUs
               </button>
 
               <button
+                onClick={() => setPaymentMethod('sadapay')}
+                className={`p-3 rounded-xl border text-left transition flex items-center space-x-2.5 ${
+                  paymentMethod === 'sadapay' ? 'bg-emerald-500/10 border-emerald-500 text-white font-bold' : 'bg-slate-900 border-slate-800 text-slate-400'
+                }`}
+              >
+                <Smartphone className="w-5 h-5 text-cyan-400" />
+                <div className="text-xs">Sadapay</div>
+              </button>
+
+              <button
                 onClick={() => setPaymentMethod('usdt')}
                 className={`p-3 rounded-xl border text-left transition flex items-center space-x-2.5 ${
                   paymentMethod === 'usdt' ? 'bg-emerald-500/10 border-emerald-500 text-white font-bold' : 'bg-slate-900 border-slate-800 text-slate-400'
@@ -201,7 +211,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({ onClose, user, setUs
                 </div>
               )}
 
-              {(paymentMethod === 'easypaisa' || paymentMethod === 'jazzcash') && (
+              {(paymentMethod === 'easypaisa' || paymentMethod === 'jazzcash' || paymentMethod === 'sadapay') && (
                 <div>
                   <label className="block text-xs text-slate-400 mb-1 font-mono uppercase">Mobile Wallet Phone Number</label>
                   <input

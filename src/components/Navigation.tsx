@@ -8,6 +8,7 @@ import {
   Sliders, 
   Bell, 
   Zap,
+  BookOpen,
   CreditCard,
   ChevronDown,
   Crown,
@@ -154,6 +155,18 @@ export const Navigation: React.FC<NavigationProps> = ({
             >
               <Bell className="w-3.5 h-3.5" />
               <span>Alerts</span>
+            </button>
+
+            <button
+              onClick={() => setCurrentTab('learn')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-1.5 ${
+                currentTab === 'learn'
+                  ? 'bg-emerald-500 text-black font-bold shadow-md shadow-emerald-500/20'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+              }`}
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>Learn</span>
             </button>
 
             <button
@@ -372,6 +385,15 @@ export const Navigation: React.FC<NavigationProps> = ({
         >
           <Sliders className="w-5 h-5" />
           <span className="text-[10px] font-medium mt-0.5">Admin</span>
+        </button>
+        <button
+          onClick={() => setCurrentTab('learn')}
+          className={`flex flex-col items-center p-1 rounded-lg ${
+            currentTab === 'learn' ? 'text-emerald-400' : 'text-slate-400'
+          }`}
+        >
+          <BookOpen className="w-5 h-5" />
+          <span className="text-[10px] font-medium mt-0.5">Learn</span>
         </button>
       </div>
     </header>

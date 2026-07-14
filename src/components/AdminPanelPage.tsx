@@ -17,13 +17,14 @@ import {
   Check,
   Save
   ,PlusCircle,
-  Trash2
+  Trash2,
+  Lock
 } from 'lucide-react';
 import { DEFAULT_ADMIN_PAYMENT_CONFIG, GENERATE_SQL_SCHEMA, GENERATE_JSON_DUMP } from '../data/serverConfig';
 import confetti from 'canvas-confetti';
 
 export const AdminPanelPage: React.FC = () => {
-  const [activeSubTab, setActiveSubTab] = useState<'dashboard' | 'users' | 'signals' | 'aiConfig' | 'paymentGateways' | 'dbExport'>('dashboard');
+  const [activeSubTab, setActiveSubTab] = useState<'dashboard' | 'users' | 'signals' | 'aiConfig' | 'paymentGateways' | 'security' | 'dbExport'>('dashboard');
 
   // AI Config controls state
   const [confidenceThreshold, setConfidenceThreshold] = useState<number>(92);
@@ -152,7 +153,8 @@ export const AdminPanelPage: React.FC = () => {
           { id: 'users', label: '3. User Management', icon: Users },
           { id: 'signals', label: '4. Regime Override', icon: Zap },
           { id: 'aiConfig', label: '5. AI Quantum Sliders', icon: Sliders },
-          { id: 'dbExport', label: '6. Server DB Export Hub', icon: Download },
+          { id: 'security', label: '6. Security', icon: Lock },
+          { id: 'dbExport', label: '7. Server DB Export Hub', icon: Download },
         ].map((tab) => {
           const Icon = tab.icon;
           return (
@@ -268,7 +270,7 @@ export const AdminPanelPage: React.FC = () => {
               <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
                 <div className="flex items-center space-x-2 text-emerald-400 font-bold font-sans">
                   <Smartphone className="w-4 h-4" />
-                  <span>Local Mobile Wallets (Easypaisa / JazzCash)</span>
+                  <span>Local Mobile Wallets (Easypaisa / JazzCash / Sadapay)</span>
                 </div>
 
                 <div>
@@ -307,6 +309,26 @@ export const AdminPanelPage: React.FC = () => {
                     type="text"
                     value={paymentConfig.jazzcashAccountTitle}
                     onChange={(e) => setPaymentConfig({ ...paymentConfig, jazzcashAccountTitle: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 mb-1">Sadapay Account / Phone</label>
+                  <input
+                    type="text"
+                    value={paymentConfig.sadapayAccountNumber}
+                    onChange={(e) => setPaymentConfig({ ...paymentConfig, sadapayAccountNumber: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 mb-1">Sadapay Account Title</label>
+                  <input
+                    type="text"
+                    value={paymentConfig.sadapayAccountTitle}
+                    onChange={(e) => setPaymentConfig({ ...paymentConfig, sadapayAccountTitle: e.target.value })}
                     className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white"
                   />
                 </div>
@@ -601,6 +623,36 @@ export const AdminPanelPage: React.FC = () => {
                 onChange={(e) => setMaxFairUseCap(Number(e.target.value))}
                 className="w-full accent-purple-500"
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeSubTab === 'security' && (
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fadeIn">
+          <div className="p-6 rounded-2xl bg-[#0f1420] border border-slate-800 space-y-4">
+            <h3 className="text-base font-bold text-white flex items-center gap-2"><Lock className="w-4 h-4 text-emerald-400" /> Admin Security Controls</h3>
+            <div className="space-y-3 text-xs">
+              <label className="flex items-center justify-between rounded-xl bg-slate-900 p-3 border border-slate-800">
+                <span>Require 2FA for master/admin accounts</span>
+                <input type="checkbox" defaultChecked className="accent-emerald-500" />
+              </label>
+              <label className="flex items-center justify-between rounded-xl bg-slate-900 p-3 border border-slate-800">
+                <span>Block suspicious login locations</span>
+                <input type="checkbox" defaultChecked className="accent-emerald-500" />
+              </label>
+              <label className="flex items-center justify-between rounded-xl bg-slate-900 p-3 border border-slate-800">
+                <span>Enable payment webhook signature checks</span>
+                <input type="checkbox" defaultChecked className="accent-emerald-500" />
+              </label>
+            </div>
+          </div>
+          <div className="p-6 rounded-2xl bg-[#0f1420] border border-slate-800 space-y-4">
+            <h3 className="text-base font-bold text-white">Audit Log</h3>
+            <div className="space-y-2 text-xs font-mono">
+              <div className="rounded-xl bg-slate-900 p-3 border border-slate-800 text-slate-300">Master changed user credits | Just now</div>
+              <div className="rounded-xl bg-slate-900 p-3 border border-slate-800 text-slate-300">Payment account settings reviewed | Today</div>
+              <div className="rounded-xl bg-slate-900 p-3 border border-slate-800 text-slate-300">Security scan passed | Today</div>
             </div>
           </div>
         </div>

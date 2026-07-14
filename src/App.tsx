@@ -5,6 +5,8 @@ import { SignalEnginePage } from './components/SignalEnginePage';
 import { TopScannerPage } from './components/TopScannerPage';
 import { WatchlistAlertsPage } from './components/WatchlistAlertsPage';
 import { AdminPanelPage } from './components/AdminPanelPage';
+import { AuthPage } from './components/AuthPage';
+import { LearnPage } from './components/LearnPage';
 import { PricingModal } from './components/PricingModal';
 import { CapitalShieldModal } from './components/CapitalShieldModal';
 import { UserProfile } from './types';
@@ -21,7 +23,7 @@ export default function App() {
   useEffect(() => {
     if (window.location.pathname !== '/') {
       window.history.replaceState({}, '', '/');
-      setCurrentTab('home');
+      setCurrentTab('login');
     }
   }, []);
 
@@ -48,6 +50,10 @@ export default function App() {
           />
         )}
 
+        {currentTab === 'login' && (
+          <AuthPage setUser={setUser} setCurrentTab={setCurrentTab} />
+        )}
+
         {currentTab === 'terminal' && (
           <SignalEnginePage
             user={user}
@@ -69,6 +75,10 @@ export default function App() {
 
         {currentTab === 'admin' && (
           <AdminPanelPage />
+        )}
+
+        {currentTab === 'learn' && (
+          <LearnPage />
         )}
       </main>
 
