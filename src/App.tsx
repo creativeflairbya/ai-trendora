@@ -7,6 +7,7 @@ import { WatchlistAlertsPage } from './components/WatchlistAlertsPage';
 import { AdminPanelPage } from './components/AdminPanelPage';
 import { AuthPage } from './components/AuthPage';
 import { LearnPage } from './components/LearnPage';
+import { Footer } from './components/Footer';
 import { PricingModal } from './components/PricingModal';
 import { CapitalShieldModal } from './components/CapitalShieldModal';
 import { UserProfile } from './types';
@@ -16,16 +17,20 @@ export default function App() {
   const [currentTab, setCurrentTab] = useState<string>('home');
   const [showPricingModal, setShowPricingModal] = useState<boolean>(false);
   const [showCapitalShield, setShowCapitalShield] = useState<boolean>(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => localStorage.getItem('chartsignal-auth') === 'true');
 
   // Initialize with Unrestricted Master Account by default
   const [user, setUser] = useState<UserProfile>(ACCOUNT_PRESETS.master);
 
   useEffect(() => {
     if (window.location.pathname !== '/') {
-      window.history.replaceState({}, '', '/');
+      window.history.replaceState({}, '', `/${window.location.search}`);
       setCurrentTab('login');
     }
   }, []);
+
+  const protectedTabs = ['terminal', 'scanner', 'watchlist', 'admin'];
+  const showLogin = protectedTabs.includes(currentTab) && !isAuthenticated;
 
   return (
     <div className="min-h-screen bg-[#0b0e14] text-slate-100 selection:bg-emerald-500 selection:text-black">
@@ -41,7 +46,17 @@ export default function App() {
 
       {/* Main View Router */}
       <main>
-        {currentTab === 'home' && (
+        {showLogin && (
+          <AuthPage
+            setUser={(next) => {
+              setUser(next);
+              setIsAuthenticated(true);
+              localStorage.setItem('chartsignal-auth', 'true');
+            }}
+            setCurrentTab={setCurrentTab}
+          />
+        )}
+        {!showLogin && currentTab === 'home' && (
           <LandingPage
             setCurrentTab={setCurrentTab}
             user={user}
@@ -50,11 +65,18 @@ export default function App() {
           />
         )}
 
-        {currentTab === 'login' && (
-          <AuthPage setUser={setUser} setCurrentTab={setCurrentTab} />
+        {!showLogin && currentTab === 'login' && (
+          <AuthPage
+            setUser={(next) => {
+              setUser(next);
+              setIsAuthenticated(true);
+              localStorage.setItem('chartsignal-auth', 'true');
+            }}
+            setCurrentTab={setCurrentTab}
+          />
         )}
 
-        {currentTab === 'terminal' && (
+        {!showLogin && currentTab === 'terminal' && (
           <SignalEnginePage
             user={user}
             setUser={setUser}
@@ -63,24 +85,26 @@ export default function App() {
           />
         )}
 
-        {currentTab === 'scanner' && (
+        {!showLogin && currentTab === 'scanner' && (
           <TopScannerPage
             onSelectAsset={() => setCurrentTab('terminal')}
           />
         )}
 
-        {currentTab === 'watchlist' && (
+        {!showLogin && currentTab === 'watchlist' && (
           <WatchlistAlertsPage />
         )}
 
-        {currentTab === 'admin' && (
+        {!showLogin && currentTab === 'admin' && (
           <AdminPanelPage />
         )}
 
-        {currentTab === 'learn' && (
+        {!showLogin && currentTab === 'learn' && (
           <LearnPage />
         )}
       </main>
+
+      {currentTab !== 'login' && <Footer setCurrentTab={setCurrentTab} openPricingModal={() => setShowPricingModal(true)} />}
 
       {/* Modals */}
       {showPricingModal && (

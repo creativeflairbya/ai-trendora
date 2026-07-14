@@ -18,13 +18,15 @@ import {
   Save
   ,PlusCircle,
   Trash2,
-  Lock
+  Lock,
+  Plug,
+  FileText
 } from 'lucide-react';
 import { DEFAULT_ADMIN_PAYMENT_CONFIG, GENERATE_SQL_SCHEMA, GENERATE_JSON_DUMP } from '../data/serverConfig';
 import confetti from 'canvas-confetti';
 
 export const AdminPanelPage: React.FC = () => {
-  const [activeSubTab, setActiveSubTab] = useState<'dashboard' | 'users' | 'signals' | 'aiConfig' | 'paymentGateways' | 'security' | 'dbExport'>('dashboard');
+  const [activeSubTab, setActiveSubTab] = useState<'dashboard' | 'users' | 'signals' | 'aiConfig' | 'paymentGateways' | 'security' | 'apiStatus' | 'pageBuilder' | 'dbExport'>('dashboard');
 
   // AI Config controls state
   const [confidenceThreshold, setConfidenceThreshold] = useState<number>(92);
@@ -34,6 +36,17 @@ export const AdminPanelPage: React.FC = () => {
   // Payment Setup state
   const [paymentConfig, setPaymentConfig] = useState(DEFAULT_ADMIN_PAYMENT_CONFIG);
   const [isSavingPay, setIsSavingPay] = useState(false);
+  const [apiChecks, setApiChecks] = useState<Array<{ name: string; status: string; detail: string }>>([]);
+  const [contentDraft, setContentDraft] = useState({
+    heroTitle: 'AI Signals. Simple Decisions.',
+    heroSubtitle: 'Upload chart screenshots and receive risk-managed futures signal guidance.',
+    announcement: 'Security Shield Active | Free tier available | 99% confluence mode',
+    selectedPage: 'Home',
+    blockType: 'Hero',
+    blockTitle: 'Screenshot-first AI chart analysis',
+    blockText: 'Upload a chart and let the AI generate the safest signal.',
+    mediaUrl: ''
+  });
 
   const [newUser, setNewUser] = useState({
     name: '',
@@ -118,6 +131,25 @@ export const AdminPanelPage: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  const runApiChecks = async () => {
+    const checks: Array<{ name: string; status: string; detail: string }> = [];
+    try {
+      const res = await fetch('https://fapi.binance.com/fapi/v1/ticker/price?symbol=BTCUSDT', { cache: 'no-store' });
+      checks.push({ name: 'Binance Futures Free API', status: res.ok ? 'Working' : 'Error', detail: res.ok ? 'Ticker endpoint reachable' : `HTTP ${res.status}` });
+    } catch {
+      checks.push({ name: 'Binance Futures Free API', status: 'Error', detail: 'Request blocked/unreachable from browser' });
+    }
+    try {
+      const res = await fetch('https://api.bitget.com/api/v2/mix/market/ticker?symbol=BTCUSDT&productType=USDT-FUTURES', { cache: 'no-store' });
+      checks.push({ name: 'Bitget Futures API', status: res.ok ? 'Working' : 'Error', detail: res.ok ? 'Ticker endpoint reachable' : `HTTP ${res.status}` });
+    } catch {
+      checks.push({ name: 'Bitget Futures API', status: 'Error', detail: 'Request blocked/unreachable from browser' });
+    }
+    checks.push({ name: 'Gemini Vision API', status: 'Server Required', detail: 'Configure GEMINI_API_KEY on backend and VITE_GEMINI_VISION_API in frontend' });
+    checks.push({ name: 'Key Expiry', status: 'Manual', detail: 'Public APIs do not expose expiry; Gemini key status is verified via backend /health' });
+    setApiChecks(checks);
+  };
+
   return (
     <div className="min-h-screen pb-28 bg-[#080a10] text-slate-100 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       
@@ -154,7 +186,9 @@ export const AdminPanelPage: React.FC = () => {
           { id: 'signals', label: '4. Regime Override', icon: Zap },
           { id: 'aiConfig', label: '5. AI Quantum Sliders', icon: Sliders },
           { id: 'security', label: '6. Security', icon: Lock },
-          { id: 'dbExport', label: '7. Server DB Export Hub', icon: Download },
+          { id: 'apiStatus', label: '7. API Status', icon: Plug },
+          { id: 'pageBuilder', label: '8. Page Builder', icon: FileText },
+          { id: 'dbExport', label: '9. Server DB Export Hub', icon: Download },
         ].map((tab) => {
           const Icon = tab.icon;
           return (
@@ -654,6 +688,104 @@ export const AdminPanelPage: React.FC = () => {
               <div className="rounded-xl bg-slate-900 p-3 border border-slate-800 text-slate-300">Payment account settings reviewed | Today</div>
               <div className="rounded-xl bg-slate-900 p-3 border border-slate-800 text-slate-300">Security scan passed | Today</div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {activeSubTab === 'apiStatus' && (
+        <div className="mt-8 p-6 rounded-3xl bg-[#0f1420] border border-slate-800 space-y-5 animate-fadeIn">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-extrabold text-white">Real API Usage & Status</h3>
+              <p className="text-xs text-slate-400 mt-1">Check whether live market APIs are reachable from the current browser/server environment.</p>
+            </div>
+            <button onClick={runApiChecks} className="rounded-xl bg-emerald-500 px-4 py-2 text-xs font-extrabold text-black hover:bg-emerald-400">Run API Checks</button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {(apiChecks.length ? apiChecks : [
+              { name: 'Binance Futures Free API', status: 'Not checked', detail: 'Click Run API Checks' },
+              { name: 'Bitget Futures API', status: 'Not checked', detail: 'Click Run API Checks' },
+              { name: 'Gemini Vision API', status: 'Not checked', detail: 'Backend required' }
+            ]).map((api) => (
+              <div key={api.name} className="rounded-2xl border border-slate-800 bg-slate-900 p-4 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-white">{api.name}</span>
+                  <span className={`rounded px-2 py-0.5 font-bold ${api.status === 'Working' ? 'bg-emerald-500/20 text-emerald-300' : api.status === 'Error' ? 'bg-rose-500/20 text-rose-300' : 'bg-amber-500/20 text-amber-300'}`}>{api.status}</span>
+                </div>
+                <p className="mt-2 text-slate-400">{api.detail}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {activeSubTab === 'pageBuilder' && (
+        <div className="mt-8 p-6 rounded-3xl bg-[#0f1420] border border-slate-800 space-y-5 animate-fadeIn">
+          <div>
+            <h3 className="text-lg font-extrabold text-white">Master Page Builder</h3>
+            <p className="text-xs text-slate-400 mt-1">Edit pages, text blocks and media sections similar to a lightweight WPBakery-style builder. In production these fields should save to your database/CMS.</p>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">Page</label>
+              <select value={contentDraft.selectedPage} onChange={(e) => setContentDraft({ ...contentDraft, selectedPage: e.target.value })} className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white">
+                <option>Home</option>
+                <option>Signals</option>
+                <option>Pricing</option>
+                <option>Learn</option>
+                <option>Support</option>
+                <option>Terms</option>
+                <option>Privacy</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">Block type</label>
+              <select value={contentDraft.blockType} onChange={(e) => setContentDraft({ ...contentDraft, blockType: e.target.value })} className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white">
+                <option>Hero</option>
+                <option>Text Section</option>
+                <option>Image + Text</option>
+                <option>Pricing CTA</option>
+                <option>FAQ Accordion</option>
+                <option>Risk Disclaimer</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">Media URL</label>
+              <input value={contentDraft.mediaUrl} onChange={(e) => setContentDraft({ ...contentDraft, mediaUrl: e.target.value })} placeholder="https://..." className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white" />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">Hero title</label>
+              <input value={contentDraft.heroTitle} onChange={(e) => setContentDraft({ ...contentDraft, heroTitle: e.target.value })} className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white" />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">Announcement</label>
+              <input value={contentDraft.announcement} onChange={(e) => setContentDraft({ ...contentDraft, announcement: e.target.value })} className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white" />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">Block title</label>
+              <input value={contentDraft.blockTitle} onChange={(e) => setContentDraft({ ...contentDraft, blockTitle: e.target.value })} className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white" />
+            </div>
+            <div className="lg:col-span-3">
+              <label className="block text-xs text-slate-400 mb-1">Hero subtitle</label>
+              <textarea value={contentDraft.heroSubtitle} onChange={(e) => setContentDraft({ ...contentDraft, heroSubtitle: e.target.value })} className="h-24 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white" />
+            </div>
+            <div className="lg:col-span-3">
+              <label className="block text-xs text-slate-400 mb-1">Block text / HTML-safe content</label>
+              <textarea value={contentDraft.blockText} onChange={(e) => setContentDraft({ ...contentDraft, blockText: e.target.value })} className="h-32 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white" />
+            </div>
+          </div>
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+            <div className="text-xs font-bold text-slate-400 uppercase mb-2">Live Preview</div>
+            <div className="rounded-xl bg-slate-950 p-4">
+              <div className="text-[11px] text-emerald-400 font-bold">{contentDraft.selectedPage} / {contentDraft.blockType}</div>
+              <h4 className="mt-2 text-lg font-extrabold text-white">{contentDraft.blockTitle || contentDraft.heroTitle}</h4>
+              <p className="mt-2 text-sm text-slate-300">{contentDraft.blockText || contentDraft.heroSubtitle}</p>
+              {contentDraft.mediaUrl && <img src={contentDraft.mediaUrl} alt="Preview media" className="mt-3 max-h-40 rounded-xl border border-slate-800 object-cover" />}
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => confetti({ particleCount: 40, spread: 55, origin: { y: 0.7 } })} className="rounded-xl bg-emerald-500 px-5 py-2 text-xs font-extrabold text-black hover:bg-emerald-400">Save Content Draft</button>
+            <button onClick={() => setContentDraft({ ...contentDraft, blockTitle: '', blockText: '', mediaUrl: '' })} className="rounded-xl bg-slate-800 px-5 py-2 text-xs font-bold text-white hover:bg-slate-700">Add New Block</button>
           </div>
         </div>
       )}

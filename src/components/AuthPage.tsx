@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { KeyRound, Mail, Phone, ShieldCheck, UserPlus } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { KeyRound, Mail, Phone, UserPlus } from 'lucide-react';
 import { UserProfile } from '../types';
 import { ACCOUNT_PRESETS } from '../data/serverConfig';
+
+const authApi = ((import.meta as unknown as { env?: { VITE_AUTH_API?: string } }).env?.VITE_AUTH_API) || '';
 
 interface AuthPageProps {
   setUser: React.Dispatch<React.SetStateAction<UserProfile>>;
@@ -15,6 +17,14 @@ export const AuthPage: React.FC<AuthPageProps> = ({ setUser, setCurrentTab }) =>
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
   const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('resetToken')) {
+      setMode('change');
+      setMessage('Reset token detected. Enter your new password and submit through your production backend.');
+    }
+  }, []);
 
   const login = () => {
     const normalized = email.toLowerCase().trim();
@@ -36,11 +46,21 @@ export const AuthPage: React.FC<AuthPageProps> = ({ setUser, setCurrentTab }) =>
     setCurrentTab('home');
   };
 
-  const reset = () => {
-    if (email.toLowerCase().trim() === 'creativeflairbya@gmail.com') {
-      setMessage('Master reset link simulated. Check secure owner inbox in production.');
-    } else {
-      setMessage('Password reset instructions sent if this email exists.');
+  const reset = async () => {
+    try {
+      if (authApi) {
+        const response = await fetch(`${authApi.replace(/\/$/, '')}/password-reset`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        const payload = await response.json();
+        setMessage(payload.message || 'If this email exists, reset instructions were sent.');
+        return;
+      }
+      setMessage('Password reset backend is not configured. Set VITE_AUTH_API to enable real reset emails.');
+    } catch {
+      setMessage('Unable to contact password reset service. Please try again later.');
     }
   };
 
@@ -104,10 +124,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({ setUser, setCurrentTab }) =>
 
         {message && <div className="rounded-xl border border-slate-700 bg-slate-900 p-3 text-xs text-slate-200">{message}</div>}
 
-        <div className="flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-[11px] text-emerald-100">
-          <ShieldCheck className="h-4 w-4 text-emerald-400" />
-          <span>Master password is not displayed here. Owner reset email: creativeflairbya@gmail.com</span>
-        </div>
       </div>
     </div>
   );
